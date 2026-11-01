@@ -70,10 +70,13 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
   }
 
   let channel: RealtimeChannel | null = null
+  // Unique per composable instance: two views of the same group (feed, item, settings) can
+  // overlap during navigation, and supabase-js refuses new callbacks on an already-subscribed topic.
+  const instanceId = Math.random().toString(36).slice(2, 10)
   function subscribe() {
     unsubscribe()
     channel = supabase
-      .channel(`group-feed:${groupId.value}`)
+      .channel(`group-feed:${groupId.value}:${instanceId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'group_feed_state', filter: `group_id=eq.${groupId.value}` },
