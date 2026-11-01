@@ -17,3 +17,4 @@ export type ClothingItem = Tables<'clothing_items'>
 export type Vote = Tables<'votes'>
 export type GroupFeedState = Tables<'group_feed_state'>
 export type VoteCounts = Database['public']['Functions']['group_vote_counts']['Returns'][number]
+export type MyMembershipRequest = Database['public']['Functions']['my_membership_requests']['Returns'][number]

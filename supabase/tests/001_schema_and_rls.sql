@@ -1,7 +1,7 @@
 -- pgTAP tests for vote constraints, invitation lifecycle, membership and account boundaries.
 -- Run with: supabase test db  (requires a local stack: supabase start)
 begin;
-select plan(35);
+select plan(36);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: four auth users with profiles.
@@ -113,6 +113,7 @@ select is((select status from t_req), 'pending'::public.request_status, 'redempt
 select throws_ok($$select public.redeem_invitation((select token from t_inv), 'again')$$, 'P0002', null,
   'a redeemed link cannot be used again');
 select is((select count(*) from public.clothing_items), 0::bigint, 'a pending applicant sees no item');
+select is((select group_name from public.my_membership_requests()), 'Test group', 'a pending applicant sees the group name of their own request');
 
 -- Owner reviews: rejection does not reactivate the link; approval adds the member.
 select tests.login('00000000-0000-0000-0000-000000000002');

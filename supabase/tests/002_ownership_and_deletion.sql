@@ -33,7 +33,7 @@ select throws_ok($$select public.transfer_group_ownership((select id from t_grou
   'a member cannot transfer ownership');
 delete from public.group_members where group_id = (select id from t_group) and user_id = '00000000-0000-0000-0000-000000000001';
 select tests.logout();
-select is((select count(*) from public.group_members where role = 'owner'), 1::bigint, 'a member cannot remove the owner');
+select is((select count(*) from public.group_members where group_id = (select id from t_group) and role = 'owner'), 1::bigint, 'a member cannot remove the owner');
 
 select tests.login('00000000-0000-0000-0000-000000000004');
 delete from public.group_members where group_id = (select id from t_group);
@@ -63,7 +63,8 @@ select lives_ok($$delete from public.profiles where id = '00000000-0000-0000-000
 insert into public.clothing_items (group_id, uploader_id, storage_path)
 values ((select id from t_group), '00000000-0000-0000-0000-000000000002', (select id from t_group) || '/00000000-0000-0000-0000-000000000002/b.jpg');
 select ok((select retention_deadline between now() + interval '2 years' - interval '1 minute' and now() + interval '2 years' + interval '1 minute'
-           from public.clothing_items limit 1), 'retention deadline defaults to two years after upload');
+           from public.clothing_items where storage_path = (select id from t_group) || '/00000000-0000-0000-0000-000000000002/b.jpg'),
+          'retention deadline defaults to two years after upload');
 
 select * from finish();
 rollback;

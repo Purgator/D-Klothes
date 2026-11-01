@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { errorKey } from '@/lib/errors'
 import { daysUntil } from '@/lib/retention'
-import type { ClothingItem, Group, MembershipRequest } from '@/types/database'
+import type { ClothingItem, Group, MyMembershipRequest } from '@/types/database'
 
 const { t, d } = useI18n()
 const router = useRouter()
@@ -16,7 +16,7 @@ interface GroupRow extends Group {
   memberCount: number
 }
 const groups = ref<GroupRow[]>([])
-const requests = ref<(MembershipRequest & { groupName: string | null })[]>([])
+const requests = ref<MyMembershipRequest[]>([])
 const notices = ref<ClothingItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -30,7 +30,7 @@ async function load() {
   try {
     const [g, r, n] = await Promise.all([
       supabase.from('groups').select('*, group_members(count)').order('created_at'),
-      supabase.from('membership_requests').select('*').order('created_at', { ascending: false }),
+      supabase.rpc('my_membership_requests'),
       supabase.rpc('my_retention_notices'),
     ])
     for (const res of [g, r, n]) if (res.error) throw res.error
@@ -38,11 +38,7 @@ async function load() {
       ...row,
       memberCount: row.group_members?.[0]?.count ?? 0,
     }))
-    // Group names for pending/rejected requests are not readable through RLS (not a member),
-    // so they are shown generically; the invitation page already told the applicant the name.
-    requests.value = (r.data ?? [])
-      .filter((req) => req.status !== 'approved')
-      .map((req) => ({ ...req, groupName: null }))
+    requests.value = (r.data ?? []).filter((req) => req.status !== 'approved')
     notices.value = n.data ?? []
   } catch (err) {
     error.value = errorKey(err)
@@ -109,8 +105,8 @@ onMounted(load)
           <li v-for="req in requests" :key="req.id" class="card text-sm" :class="req.status === 'rejected' ? 'text-stone-500' : ''">
             {{
               req.status === 'pending'
-                ? t('home.pendingRequestHint', { group: req.groupName ?? '…' })
-                : t('home.rejectedRequest', { group: req.groupName ?? '…' })
+                ? t('home.pendingRequestHint', { group: req.group_name })
+                : t('home.rejectedRequest', { group: req.group_name })
             }}
             <span class="block text-xs text-stone-400">{{ d(new Date(req.created_at), 'short') }}</span>
           </li>

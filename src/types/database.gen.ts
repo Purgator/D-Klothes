@@ -394,6 +394,18 @@ export type Database = {
       is_group_owner: { Args: { p_group_id: string }; Returns: boolean };
       item_group_id: { Args: { p_item_id: string }; Returns: string };
       item_uploader_id: { Args: { p_item_id: string }; Returns: string };
+      my_membership_requests: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          group_id: string;
+          group_name: string;
+          id: string;
+          message: string;
+          reviewed_at: string;
+          status: Database["public"]["Enums"]["request_status"];
+        }[];
+      };
       my_retention_notices: {
         Args: Record<PropertyKey, never>;
         Returns: {
