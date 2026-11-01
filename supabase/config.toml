@@ -1,0 +1,74 @@
+# Supabase CLI configuration for local development.
+# See https://supabase.com/docs/guides/local-development/cli/config
+project_id = "dklothes"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 500
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.seed]
+enabled = false
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "2MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/auth/callback", "http://127.0.0.1:5173/auth/callback"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+max_frequency = "1m0s"
+
+[auth.rate_limit]
+email_sent = 4
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+
+[functions.register-photo]
+verify_jwt = true
+
+[functions.delete-photo]
+verify_jwt = true
+
+[functions.delete-group]
+verify_jwt = true
+
+[functions.export-account]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.retention-cleanup]
+# Called by the scheduler with a shared secret, not by signed-in users.
+verify_jwt = false
