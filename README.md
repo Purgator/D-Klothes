@@ -1,54 +1,89 @@
 # D-Klothes
 
-Private, invite-only app for small groups of friends deciding what to keep, let go, or offer to one another. A vote is advice: the app never disposes of or transfers clothing.
+**Decide together what to keep, let go, or offer to friends.**
 
-Stack: Vue 3 + TypeScript + Vite, Vue Router, vue-i18n (French default, English), Tailwind CSS, Supabase (Auth, PostgreSQL with RLS, private Storage, Realtime, Edge Functions).
+D-Klothes is a private, invite-only web app for a small group of friends (5 to 20 people)
+sorting out their wardrobes. You photograph a piece of clothing, your friends tell you
+*Keep*, *Let go* or *I want this*, and you decide. Nothing happens automatically: a vote is
+advice, the app never disposes of or transfers anything, and you arrange any hand-over
+yourself.
 
-## Layout
+👉 **Open the app: [purgator.github.io/D-Klothes](https://purgator.github.io/D-Klothes/)**
+
+Installable on iPhone and Android as a web app. French and English, chosen from your device
+and switchable at any time.
+
+## Features
+
+- **Sign in by email link.** No password. You pick a display name once.
+- **Groups you control.** Create a group, invite friends with single-use links that expire
+  after 24 hours, and approve or decline each request yourself. Transfer ownership or delete
+  the group whenever you want.
+- **Photos, not metadata.** Each photo is downscaled and recompressed in your browser (2 MiB
+  max) and its EXIF data (location, device, date) is removed before upload. The server checks
+  again and refuses anything that still carries metadata.
+- **One vote per person per item, changeable.** Keep, Let go or I want this. Everyone sees the
+  counts; nobody sees who voted Keep or Let go. Only the uploader sees who is interested.
+- **Live feed.** Votes and new photos show up in open sessions without reloading.
+- **Two-year retention.** Every photo shows the date it will be deleted. Uploaders get an
+  in-app notice 30 days before. Delete sooner whenever you like.
+- **Your data stays yours.** Export everything (profile, memberships, votes, photos) as a ZIP,
+  or delete your account entirely.
+
+## Privacy
+
+Photos and votes are visible only to approved members of the same group, enforced by database
+policies and private storage, not just by the interface. There is no analytics, no tracking,
+and no private data cached in the browser. See [AGENTS.md](AGENTS.md) for the full product and
+security guide, including what still has to be verified before a public launch (privacy notice,
+lawful basis, hosting terms).
+
+## For developers
+
+Vue 3 + TypeScript + Vite, Vue Router, vue-i18n, Tailwind CSS. Backend on Supabase: Auth,
+PostgreSQL with row-level security, private Storage, Realtime and Edge Functions.
 
 | Path | Purpose |
 | --- | --- |
-| `src/` | Vue app: `views/` (one per route), `components/`, `composables/` (auth, group feed, signed photo URLs), `lib/` (pure helpers), `i18n/locales/` |
-| `supabase/migrations/` | Versioned schema, RLS policies, RPCs, Storage bucket and policies, retention cron |
-| `supabase/functions/` | Edge Functions for privileged operations (see below) |
+| `src/views/` | One component per route (sign-in, onboarding, groups, feed, upload, item, settings, invite, account) |
+| `src/composables/` | Auth state, group feed with Realtime refetch, signed photo URLs |
+| `src/lib/` | Pure helpers: image preparation, retention, invitations, votes, error mapping |
+| `src/i18n/locales/` | French (default) and English resources; a test keeps them in sync |
+| `supabase/migrations/` | Schema, RLS policies, RPCs, Storage bucket and policies, retention cron |
+| `supabase/functions/` | Edge Functions for privileged operations, plus an end-to-end smoke test |
 | `supabase/tests/` | pgTAP tests for vote constraints, invitation lifecycle, membership and ownership boundaries |
-| `tests/` | Vitest unit tests for the pure helpers and the JPEG metadata inspector |
+| `tests/` | Vitest unit tests |
 
-## Local development
+### Run locally
 
-Prerequisites: Node 20+, Docker (for `supabase start`), the Supabase CLI (`npx supabase`).
+Prerequisites: Node 22+, Docker, the Supabase CLI.
 
 ```bash
 npm install
-cp .env.example .env.local        # fill in VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY (printed by supabase start)
-npx supabase start                # local Postgres, Auth, Storage, Realtime, Inbucket (magic-link emails at :54324)
-npx supabase db reset             # applies supabase/migrations
-npx supabase functions serve      # Edge Functions; needs the secrets below in supabase/functions/.env
+npx supabase start                # local Postgres, Auth, Storage, Realtime, Mailpit (emails at :54324)
+cp .env.example .env.local        # paste the API URL and anon key printed by `supabase start`
+printf 'RETENTION_CLEANUP_SECRET=local-secret\n' > supabase/functions/.env
+npx supabase functions serve --env-file supabase/functions/.env
 npm run dev
 ```
 
-Edge Function secrets (`supabase/functions/.env` locally, `supabase secrets set` in production):
+Magic-link emails land in Mailpit at <http://127.0.0.1:54324>. On Windows without Docker
+Desktop, Docker Engine inside WSL2 works: install `docker.io` and the Supabase CLI in the distro
+and run the `supabase` commands from the repo path under `/mnt/c`.
 
-| Name | Used by |
-| --- | --- |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | injected automatically by the platform |
-| `APP_ORIGIN` | CORS allow-origin of the deployed app (defaults to `*` for local use) |
-| `RETENTION_CLEANUP_SECRET` | shared secret checked by `retention-cleanup` |
-
-The service-role key never leaves the Edge Functions. The browser only ever holds the anon key plus the user's session.
-
-## Checks
+### Checks
 
 ```bash
 npm run check        # vue-tsc typecheck + vitest + production build
-npm run db:test      # pgTAP tests against the local stack (supabase start first)
-npm run db:smoke     # end-to-end Edge Function checks (supabase start + functions serve first)
+npm run db:test      # pgTAP tests against the local stack
+npm run db:smoke     # end-to-end Edge Function checks (functions must be served)
+npm run db:types     # regenerate src/types/database.gen.ts after a migration
 ```
 
-On Windows without Docker Desktop, Docker Engine inside WSL2 works: install `docker.io` and the Supabase CLI
-in the distro and run the `supabase` commands from the repo path under `/mnt/c`.
+`.github/workflows/pages.yml` runs the frontend checks and deploys `main` to GitHub Pages;
+`.github/workflows/backend.yml` runs the pgTAP and smoke tests on a throwaway stack.
 
-## Privileged operations (Edge Functions)
+### Privileged operations (Edge Functions)
 
 | Function | What it does |
 | --- | --- |
@@ -57,31 +92,51 @@ in the distro and run the `supabase` commands from the repo path under `/mnt/c`.
 | `delete-group` | Owner only, confirmed by typing the group name. Removes every object under the group prefix, then the group row. |
 | `export-account` | ZIP archive with `account.json` (profile, memberships, requests, votes, item metadata) and the user's photo files. |
 | `delete-account` | Requires a sign-in within the last 15 minutes and no owned groups. Removes photos via Storage, then the profile (cascades), then the Auth user. Idempotent. |
-| `retention-cleanup` | Called daily by pg_cron (`20261101000200_retention_schedule.sql`) with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. |
+| `retention-cleanup` | Called daily by pg_cron with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. |
 
-Everything else (group creation, invitations, redemption, review, votes, ownership transfer, aggregate counts) is a `security definer` RPC in `20261101000000_init.sql` that checks `auth.uid()` explicitly.
+Everything else (group creation, invitations, redemption, review, votes, ownership transfer,
+aggregate counts) is a `security definer` RPC that checks `auth.uid()` explicitly.
 
-## Retention scheduling
+### Deploying
 
-After deploying, store the cleanup URL and secret in Vault so the cron job can call the function:
+1. Create a Supabase project, then `supabase link`, `supabase db push` and
+   `supabase functions deploy`. Set the function secrets with `supabase secrets set`:
 
-```sql
-select vault.create_secret('https://<project-ref>.supabase.co/functions/v1/retention-cleanup', 'retention_cleanup_url');
-select vault.create_secret('<RETENTION_CLEANUP_SECRET>', 'retention_cleanup_secret');
-```
+   | Name | Used by |
+   | --- | --- |
+   | `APP_ORIGIN` | CORS allow-origin of the deployed app |
+   | `RETENTION_CLEANUP_SECRET` | shared secret checked by `retention-cleanup` |
 
-## Deployment notes
+2. In Supabase Auth, set the site URL and add `<origin>/<base>/auth/callback` to the redirect URLs.
+3. Store the cleanup URL and secret in Vault so the cron job can call the function:
 
-- Set `site_url` / redirect URLs in Supabase Auth to the deployed origin (`/auth/callback`).
-- `VITE_SUPABASE_URL` drives the Content Security Policy injected into `index.html` at build time (`vite.config.ts`). Browsers ignore `frame-ancestors` in a meta tag, so set `Content-Security-Policy: frame-ancestors 'none'` (or `X-Frame-Options: DENY`) as an HTTP header at the host.
-- The service worker precaches the app shell only; API responses, votes and photos are never cached.
-- Check the provider's current terms, limits, region options and costs before choosing where to host. Nothing here promises a free or compliant deployment on its own.
+   ```sql
+   select vault.create_secret('https://<project-ref>.supabase.co/functions/v1/retention-cleanup', 'retention_cleanup_url');
+   select vault.create_secret('<RETENTION_CLEANUP_SECRET>', 'retention_cleanup_secret');
+   ```
 
-## Security assumptions and open points
+4. Set the repository variables `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` so the Pages
+   workflow builds against the project. Until then the deployed site shows a "not configured"
+   notice.
 
-- RLS is deny-by-default; client writes are limited to own profile, own vote deletion, item title edits by the uploader, group rename by the owner, and member removal. Everything else goes through RPCs or Edge Functions.
-- Realtime only publishes `group_feed_state` (a per-group version counter). Clients refetch through RLS-protected queries.
+`VITE_SUPABASE_URL` also drives the Content Security Policy injected into `index.html` at build
+time. Browsers ignore `frame-ancestors` in a meta tag, so set it (or `X-Frame-Options: DENY`) as an
+HTTP header where the host allows it. Check the provider's current terms, limits, regions and
+costs before relying on any plan; nothing here promises a free or compliant deployment.
+
+### Security notes
+
+- RLS is deny-by-default. Client writes are limited to the own profile, own vote deletion, item
+  title edits by the uploader, group rename by the owner, and member removal. Everything else
+  goes through RPCs or Edge Functions.
+- Realtime publishes only `group_feed_state`, a per-group version counter; clients refetch
+  through RLS-protected queries.
 - Signed photo URLs live 10 minutes, in memory only.
-- Client-side metadata stripping is verified server-side for JPEG segments; the check does not parse nested containers (e.g. MPF) beyond flagging their APP markers.
-- `delete-account` relies on `last_sign_in_at` for the recent-session rule; a magic-link re-sign-in refreshes it.
-- Verified locally on 2026-11-01: all three migrations apply, the 48 pgTAP assertions pass, and the 45-step Edge Function smoke test passes against a `supabase start` stack. Local Storage returns HTTP 400 with the real status (403/404) in the JSON body; the app reads error codes, not HTTP statuses, so this does not affect it.
+- `delete-account` relies on `last_sign_in_at` for the recent-session rule; a magic-link
+  re-sign-in refreshes it.
+- The local Storage API returns HTTP 400 with the real status (403/404) in the JSON body; the
+  app reads error codes, not HTTP statuses.
+
+## License
+
+[GNU General Public License v3.0 or later](LICENSE) (`GPL-3.0-or-later`)
