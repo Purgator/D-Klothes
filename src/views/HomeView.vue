@@ -1,0 +1,148 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/composables/useAuth'
+import { errorKey } from '@/lib/errors'
+import { daysUntil } from '@/lib/retention'
+import type { ClothingItem, Group, MembershipRequest } from '@/types/database'
+
+const { t, d } = useI18n()
+const router = useRouter()
+const auth = useAuth()
+
+interface GroupRow extends Group {
+  memberCount: number
+}
+const groups = ref<GroupRow[]>([])
+const requests = ref<(MembershipRequest & { groupName: string | null })[]>([])
+const notices = ref<ClothingItem[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
+
+const newName = ref('')
+const creating = ref(false)
+const createError = ref<string | null>(null)
+
+async function load() {
+  error.value = null
+  try {
+    const [g, r, n] = await Promise.all([
+      supabase.from('groups').select('*, group_members(count)').order('created_at'),
+      supabase.from('membership_requests').select('*').order('created_at', { ascending: false }),
+      supabase.rpc('my_retention_notices'),
+    ])
+    for (const res of [g, r, n]) if (res.error) throw res.error
+    groups.value = ((g.data ?? []) as unknown as (Group & { group_members: { count: number }[] })[]).map((row) => ({
+      ...row,
+      memberCount: row.group_members?.[0]?.count ?? 0,
+    }))
+    // Group names for pending/rejected requests are not readable through RLS (not a member),
+    // so they are shown generically; the invitation page already told the applicant the name.
+    requests.value = (r.data ?? [])
+      .filter((req) => req.status !== 'approved')
+      .map((req) => ({ ...req, groupName: null }))
+    notices.value = n.data ?? []
+  } catch (err) {
+    error.value = errorKey(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function createGroup() {
+  const name = newName.value.trim()
+  if (!name) return
+  creating.value = true
+  createError.value = null
+  try {
+    const { data, error: rpcError } = await supabase.rpc('create_group', { p_name: name })
+    if (rpcError) throw rpcError
+    newName.value = ''
+    await router.push({ name: 'group', params: { groupId: data.id } })
+  } catch (err) {
+    createError.value = errorKey(err)
+  } finally {
+    creating.value = false
+  }
+}
+
+onMounted(load)
+</script>
+
+<template>
+  <section>
+    <h1 class="mb-4 text-2xl font-semibold">{{ t('home.title') }}</h1>
+
+    <p v-if="error" class="alert-error mb-4" role="alert">
+      {{ t(error) }} <button type="button" class="underline" @click="load">{{ t('app.retry') }}</button>
+    </p>
+    <p v-if="loading" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
+
+    <template v-else>
+      <section v-if="notices.length" class="alert-warning mb-4" aria-labelledby="retention-title">
+        <h2 id="retention-title" class="font-semibold">{{ t('home.retentionTitle') }}</h2>
+        <p class="mb-2">{{ t('home.retentionBody') }}</p>
+        <ul class="list-inside list-disc">
+          <li v-for="item in notices" :key="item.id">
+            <RouterLink :to="{ name: 'item', params: { groupId: item.group_id, itemId: item.id } }" class="underline">
+              {{
+                t(
+                  'home.retentionItem',
+                  {
+                    title: item.title || t('home.untitled'),
+                    date: d(new Date(item.retention_deadline), 'short'),
+                    days: Math.max(0, daysUntil(item.retention_deadline)),
+                  },
+                  Math.max(0, daysUntil(item.retention_deadline)),
+                )
+              }}
+            </RouterLink>
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="requests.length" class="mb-6" aria-labelledby="requests-title">
+        <h2 id="requests-title" class="mb-2 text-lg font-medium">{{ t('home.pendingRequests') }}</h2>
+        <ul class="flex flex-col gap-2">
+          <li v-for="req in requests" :key="req.id" class="card text-sm" :class="req.status === 'rejected' ? 'text-stone-500' : ''">
+            {{
+              req.status === 'pending'
+                ? t('home.pendingRequestHint', { group: req.groupName ?? '…' })
+                : t('home.rejectedRequest', { group: req.groupName ?? '…' })
+            }}
+            <span class="block text-xs text-stone-400">{{ d(new Date(req.created_at), 'short') }}</span>
+          </li>
+        </ul>
+      </section>
+
+      <p v-if="!groups.length" class="card mb-6 text-sm text-stone-600">{{ t('home.empty') }}</p>
+      <ul v-else class="mb-6 grid gap-3 sm:grid-cols-2">
+        <li v-for="group in groups" :key="group.id">
+          <RouterLink :to="{ name: 'group', params: { groupId: group.id } }" class="card flex items-center justify-between gap-3 hover:border-brand-600">
+            <span>
+              <span class="block font-medium">{{ group.name }}</span>
+              <span class="block text-xs text-stone-500">{{ t('home.memberCount', { count: group.memberCount }, group.memberCount) }}</span>
+            </span>
+            <span v-if="group.owner_id === auth.user.value?.id" class="rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-800">
+              {{ t('home.ownerBadge') }}
+            </span>
+          </RouterLink>
+        </li>
+      </ul>
+
+      <form class="card flex flex-col gap-3" novalidate @submit.prevent="createGroup">
+        <h2 class="text-lg font-medium">{{ t('home.createGroup') }}</h2>
+        <div>
+          <label for="group-name" class="label">{{ t('home.groupName') }}</label>
+          <input id="group-name" v-model="newName" type="text" maxlength="80" required class="input" :placeholder="t('home.groupNamePlaceholder')" />
+        </div>
+        <p v-if="createError" class="alert-error" role="alert">{{ t(createError) }}</p>
+        <button type="submit" class="btn-primary self-start" :disabled="creating || !newName.trim()">
+          {{ creating ? t('home.creating') : t('home.create') }}
+        </button>
+      </form>
+    </template>
+  </section>
+</template>
