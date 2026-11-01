@@ -42,7 +42,11 @@ The service-role key never leaves the Edge Functions. The browser only ever hold
 ```bash
 npm run check        # vue-tsc typecheck + vitest + production build
 npm run db:test      # pgTAP tests against the local stack (supabase start first)
+npm run db:smoke     # end-to-end Edge Function checks (supabase start + functions serve first)
 ```
+
+On Windows without Docker Desktop, Docker Engine inside WSL2 works: install `docker.io` and the Supabase CLI
+in the distro and run the `supabase` commands from the repo path under `/mnt/c`.
 
 ## Privileged operations (Edge Functions)
 
@@ -80,4 +84,4 @@ select vault.create_secret('<RETENTION_CLEANUP_SECRET>', 'retention_cleanup_secr
 - Signed photo URLs live 10 minutes, in memory only.
 - Client-side metadata stripping is verified server-side for JPEG segments; the check does not parse nested containers (e.g. MPF) beyond flagging their APP markers.
 - `delete-account` relies on `last_sign_in_at` for the recent-session rule; a magic-link re-sign-in refreshes it.
-- The pgTAP tests and Edge Functions have not been run in this repository yet (no local Docker available when they were written).
+- Verified locally on 2026-11-01: all three migrations apply, the 48 pgTAP assertions pass, and the 45-step Edge Function smoke test passes against a `supabase start` stack. Local Storage returns HTTP 400 with the real status (403/404) in the JSON body; the app reads error codes, not HTTP statuses, so this does not affect it.

@@ -1,6 +1,5 @@
 -- pgTAP tests for ownership transfer, member removal and account-boundary constraints.
 begin;
-create extension if not exists pgtap with schema extensions;
 select plan(12);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
@@ -13,21 +12,10 @@ insert into public.profiles (id, display_name) values
   ('00000000-0000-0000-0000-000000000002', 'Member'),
   ('00000000-0000-0000-0000-000000000004', 'Stranger');
 
-create or replace function tests.login(p_uid uuid) returns void language plpgsql as $$
-begin
-  perform set_config('role', 'authenticated', true);
-  perform set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
-end;
-$$;
-create or replace function tests.logout() returns void language plpgsql as $$
-begin
-  perform set_config('role', 'postgres', true);
-  perform set_config('request.jwt.claims', '', true);
-end;
-$$;
 
 select tests.login('00000000-0000-0000-0000-000000000001');
 create temporary table t_group as select * from public.create_group('Owned');
+grant select on t_group to anon, authenticated;
 select tests.logout();
 insert into public.group_members (group_id, user_id, role) values ((select id from t_group), '00000000-0000-0000-0000-000000000002', 'member');
 

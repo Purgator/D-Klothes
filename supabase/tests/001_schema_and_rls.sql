@@ -1,8 +1,7 @@
 -- pgTAP tests for vote constraints, invitation lifecycle, membership and account boundaries.
 -- Run with: supabase test db  (requires a local stack: supabase start)
 begin;
-create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(35);
 
 -- ---------------------------------------------------------------------------
 -- Fixtures: four auth users with profiles.
@@ -20,30 +19,13 @@ insert into public.profiles (id, display_name) values
   ('00000000-0000-0000-0000-000000000003', 'Applicant'),
   ('00000000-0000-0000-0000-000000000004', 'Stranger');
 
-create or replace function tests.login(p_uid uuid) returns void language plpgsql as $$
-begin
-  perform set_config('role', 'authenticated', true);
-  perform set_config('request.jwt.claims', json_build_object('sub', p_uid, 'role', 'authenticated')::text, true);
-end;
-$$;
-create or replace function tests.logout() returns void language plpgsql as $$
-begin
-  perform set_config('role', 'postgres', true);
-  perform set_config('request.jwt.claims', '', true);
-end;
-$$;
-create or replace function tests.anon() returns void language plpgsql as $$
-begin
-  perform set_config('role', 'anon', true);
-  perform set_config('request.jwt.claims', '', true);
-end;
-$$;
 
 -- ---------------------------------------------------------------------------
 -- Group creation
 -- ---------------------------------------------------------------------------
 select tests.login('00000000-0000-0000-0000-000000000001');
 create temporary table t_group as select * from public.create_group('  Test group  ');
+grant select on t_group to anon, authenticated;
 select is((select name from t_group), 'Test group', 'create_group trims the name');
 select is((select count(*) from public.group_members where group_id = (select id from t_group) and role = 'owner'), 1::bigint,
   'create_group adds the owner membership');
@@ -115,6 +97,7 @@ select throws_ok($$select public.create_invitation((select id from t_group))$$, 
 
 select tests.login('00000000-0000-0000-0000-000000000001');
 create temporary table t_inv as select * from public.create_invitation((select id from t_group));
+grant select on t_inv to anon, authenticated;
 select is((select char_length(token) from t_inv), 43, 'the token is 43 base64url characters');
 select is((select count(*) from public.invitations where token_hash = encode(extensions.digest((select token from t_inv), 'sha256'), 'hex')), 1::bigint,
   'only the sha256 hash of the token is stored');
@@ -125,6 +108,7 @@ select is((select group_name from public.invitation_preview((select token from t
 
 select tests.login('00000000-0000-0000-0000-000000000003');
 create temporary table t_req as select * from public.redeem_invitation((select token from t_inv), 'hello');
+grant select on t_req to anon, authenticated;
 select is((select status from t_req), 'pending'::public.request_status, 'redemption creates a pending request');
 select throws_ok($$select public.redeem_invitation((select token from t_inv), 'again')$$, 'P0002', null,
   'a redeemed link cannot be used again');
