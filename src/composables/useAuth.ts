@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import type { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { appUrl, supabase } from '@/lib/supabase'
 import type { Profile } from '@/types/database'
 
 // Module-level singletons: shared auth state without a state-management library.
@@ -52,7 +52,7 @@ export function useAuth() {
   }
 
   async function signInWithEmail(email: string, redirectPath: string): Promise<void> {
-    const emailRedirectTo = `${window.location.origin}/auth/callback`
+    const emailRedirectTo = appUrl('/auth/callback')
     try {
       sessionStorage.setItem('dklothes.redirect', redirectPath)
     } catch {

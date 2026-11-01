@@ -14,6 +14,8 @@
     "copied": "Copied!",
     "retry": "Retry",
     "offline": "Connection required: D-Klothes needs the network to show photos and record votes.",
+    "notConfigured": "This deployment is not connected to a Supabase project yet, so sign-in is unavailable. The maintainer needs to set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY at build time.",
+    "version": "Version {version}",
     "notFoundTitle": "Page not found",
     "notFoundBody": "This page does not exist or has moved.",
     "goHome": "Back to home"

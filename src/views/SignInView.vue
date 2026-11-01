@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { errorKey } from '@/lib/errors'
+import { isConfigured } from '@/lib/supabase'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -48,6 +49,8 @@ async function submit() {
       <p class="text-sm text-stone-600">{{ t('auth.sentHint') }}</p>
       <button type="button" class="btn-secondary self-start" @click="sentTo = null">{{ t('app.back') }}</button>
     </div>
+
+    <p v-else-if="!isConfigured" class="alert-warning" role="alert">{{ t('app.notConfigured') }}</p>
 
     <form v-else class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
       <p class="text-sm text-stone-700">{{ t('auth.intro') }}</p>

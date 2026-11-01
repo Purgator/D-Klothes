@@ -12,6 +12,7 @@ const { t } = useI18n()
 const router = useRouter()
 const auth = useAuth()
 
+const appVersion = __APP_VERSION__
 const displayName = ref(auth.profile.value?.display_name ?? '')
 const saving = ref(false)
 const saved = ref(false)
@@ -142,5 +143,6 @@ async function signOut() {
     </section>
 
     <button type="button" class="btn-secondary self-start" @click="signOut">{{ t('account.signOut') }}</button>
+    <p class="text-xs text-stone-400">{{ t('app.version', { version: appVersion }) }}</p>
   </section>
 </template>

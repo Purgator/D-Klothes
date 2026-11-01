@@ -4,12 +4,11 @@ import type { Database } from '@/types/database'
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-if (!url || !anonKey) {
-  throw new Error('VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set (see .env.example)')
-}
+/** False when the build has no Supabase project configured; the UI then explains instead of failing. */
+export const isConfigured = Boolean(url && anonKey)
 
 // The anon key is public by design; every privilege comes from the user's session and RLS.
-export const supabase = createClient<Database>(url, anonKey, {
+export const supabase = createClient<Database>(url || 'https://not-configured.invalid', anonKey || 'not-configured', {
   auth: {
     flowType: 'pkce',
     persistSession: true,
@@ -20,6 +19,12 @@ export const supabase = createClient<Database>(url, anonKey, {
 
 export const PHOTOS_BUCKET = 'photos'
 export const SIGNED_URL_TTL_SECONDS = 600
+
+/** Absolute URL of an app route, honouring the deployment base path (e.g. GitHub Pages). */
+export function appUrl(path: string): string {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  return `${window.location.origin}${base}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 /** Invoke an Edge Function and surface its JSON error code when it fails. */
 export async function invokeFunction<T>(name: string, body: unknown): Promise<T> {

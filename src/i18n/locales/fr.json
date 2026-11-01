@@ -14,6 +14,8 @@
     "copied": "Copié !",
     "retry": "Réessayer",
     "offline": "Connexion requise : D-Klothes a besoin du réseau pour afficher les photos et voter.",
+    "notConfigured": "Ce déploiement n’est pas encore relié à un projet Supabase : la connexion est indisponible. La personne qui maintient l’app doit définir VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY au moment du build.",
+    "version": "Version {version}",
     "notFoundTitle": "Page introuvable",
     "notFoundBody": "Cette page n’existe pas ou a été déplacée.",
     "goHome": "Retour à l’accueil"

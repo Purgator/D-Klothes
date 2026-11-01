@@ -1,0 +1,45 @@
+# Runs the database tests (pgTAP) and the Edge Function smoke test against a throwaway
+# local Supabase stack whenever the backend changes.
+name: Backend checks
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**', '.github/workflows/backend.yml']
+  pull_request:
+    paths: ['supabase/**', '.github/workflows/backend.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start the local stack (applies migrations)
+        run: supabase start -x studio,vector,logflare
+      - name: pgTAP tests
+        run: supabase test db
+      - name: Serve Edge Functions
+        run: |
+          printf 'RETENTION_CLEANUP_SECRET=ci-secret\nAPP_ORIGIN=http://localhost:5173\n' > supabase/functions/.env
+          nohup supabase functions serve --env-file supabase/functions/.env > functions.log 2>&1 &
+          for i in $(seq 1 60); do
+            grep -qi 'serving functions' functions.log && break
+            sleep 2
+          done
+          grep -qi 'serving functions' functions.log || { cat functions.log; exit 1; }
+      - name: Edge Function smoke test
+        run: bash supabase/functions/smoke-test.sh
+      - name: Function logs
+        if: failure()
+        run: cat functions.log
+      - name: Stop the stack
+        if: always()
+        run: supabase stop --no-backup

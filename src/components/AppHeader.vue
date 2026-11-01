@@ -7,6 +7,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuth()
+const baseUrl = import.meta.env.BASE_URL
 
 async function signOut() {
   await auth.signOut()
@@ -18,7 +19,7 @@ async function signOut() {
   <header class="border-b border-stone-200 bg-white">
     <nav class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3" :aria-label="t('app.name')">
       <RouterLink :to="{ name: auth.isSignedIn.value ? 'home' : 'signin' }" class="flex items-center gap-2 font-semibold text-brand-800">
-        <img src="/icons/icon.svg" alt="" width="28" height="28" class="rounded-md" />
+        <img :src="`${baseUrl}icons/icon.svg`" alt="" width="28" height="28" class="rounded-md" />
         <span>{{ t('app.name') }}</span>
       </RouterLink>
       <div class="flex items-center gap-2">

@@ -7,8 +7,8 @@ export function isValidTokenFormat(token: unknown): token is string {
   return typeof token === 'string' && TOKEN_RE.test(token)
 }
 
-export function buildInviteUrl(token: string, origin: string = window.location.origin): string {
-  return `${origin}/invite/${token}`
+export function buildInviteUrl(token: string, origin: string = window.location.origin, base: string = import.meta.env.BASE_URL): string {
+  return `${origin}${base.replace(/\/$/, '')}/invite/${token}`
 }
 
 export function invitationState(inv: {

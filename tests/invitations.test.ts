@@ -16,7 +16,8 @@ describe('invitation helpers', () => {
   })
 
   it('builds the public invite URL', () => {
-    expect(buildInviteUrl(TOKEN, 'https://dklothes.example')).toBe(`https://dklothes.example/invite/${TOKEN}`)
+    expect(buildInviteUrl(TOKEN, 'https://dklothes.example', '/')).toBe(`https://dklothes.example/invite/${TOKEN}`)
+    expect(buildInviteUrl(TOKEN, 'https://purgator.github.io', '/D-Klothes/')).toBe(`https://purgator.github.io/D-Klothes/invite/${TOKEN}`)
   })
 
   it('derives the lifecycle state', () => {

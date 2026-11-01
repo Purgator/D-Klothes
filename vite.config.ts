@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
@@ -42,10 +43,16 @@ function cspPlugin(supabaseUrl: string, isDev: boolean): Plugin {
   }
 }
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isDev = mode === 'development'
+  // BASE_PATH=/D-Klothes/ for GitHub Pages project sites; '/' for a custom domain or local dev.
+  const base = env.BASE_PATH && env.BASE_PATH !== '/' ? `/${env.BASE_PATH.replace(/^\/|\/$/g, '')}/` : '/'
   return {
+    base,
+    define: { __APP_VERSION__: JSON.stringify(pkg.version) },
     plugins: [
       vue(),
       tailwindcss(),
@@ -60,21 +67,22 @@ export default defineConfig(({ mode }) => {
           short_name: 'D-Klothes',
           description: 'Decide together what to keep, let go, or offer to friends.',
           lang: 'fr',
-          start_url: '/',
+          start_url: base,
+          scope: base,
           display: 'standalone',
           background_color: '#fafaf9',
           theme_color: '#0f766e',
           icons: [
-            { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-            { src: '/icons/icon-maskable.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+            { src: `${base}icons/icon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+            { src: `${base}icons/icon-maskable.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
           ],
         },
         workbox: {
           // App shell only: precache the build output, never cache API responses, votes or photos.
           globPatterns: ['**/*.{js,css,html,svg,webmanifest}'],
           runtimeCaching: [],
-          navigateFallback: '/index.html',
-          navigateFallbackDenylist: [/^\/auth\//, /^\/storage\//, /^\/rest\//, /^\/functions\//],
+          navigateFallback: `${base}index.html`,
+          navigateFallbackDenylist: [/\/auth\/v1\//, /\/storage\/v1\//, /\/rest\/v1\//, /\/functions\/v1\//],
           cleanupOutdatedCaches: true,
         },
         devOptions: { enabled: false },

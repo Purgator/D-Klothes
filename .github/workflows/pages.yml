@@ -1,0 +1,53 @@
+# Checks the app and deploys it to GitHub Pages on every push to main.
+#
+# The deployed app needs a Supabase project. Set these repository variables
+# (Settings → Secrets and variables → Actions → Variables); the anon key is public by design:
+#   VITE_SUPABASE_URL        https://<project-ref>.supabase.co
+#   VITE_SUPABASE_ANON_KEY   the project's anon / publishable key
+# Without them the site still deploys but shows a "not configured" notice instead of sign-in.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck and unit tests
+        run: npm run typecheck && npm test
+      - name: Build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          npx vite build
+          # Single-page app: GitHub Pages serves 404.html for unknown paths.
+          cp dist/index.html dist/404.html
+          cp LICENSE dist/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
