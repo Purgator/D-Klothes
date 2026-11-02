@@ -27,8 +27,36 @@ and switchable at any time.
 - **Live feed.** Votes and new photos show up in open sessions without reloading.
 - **Two-year retention.** Every photo shows the date it will be deleted. Uploaders get an
   in-app notice 30 days before. Delete sooner whenever you like.
+- **Swipe mode.** Review a group's photos one card at a time: drag right to Keep, left to Let
+  go, up for I want this (buttons and arrow keys work too), with undo.
 - **Your data stays yours.** Export everything (profile, memberships, votes, photos) as a ZIP,
   or delete your account entirely.
+
+## Free and premium accounts
+
+This deployment is meant for the maintainer's own friends, so every new account is **free** with
+strict limits, and the maintainer grants **premium** by hand. Anyone else is welcome to run their
+own copy with their own Supabase project (see *Deploying*).
+
+| Limit | Free | Premium |
+| --- | --- | --- |
+| Groups you own | 1 | 20 |
+| Members per group you own (owner included) | 5 | 50 |
+| Photos you upload | 10 | 500 |
+| Active invitation links per group | 3 | 50 |
+
+Limits are enforced in the database (RPCs and triggers), not in the interface, so a modified
+frontend cannot bypass them. The tier column cannot be changed by any client call. To grant or
+revoke premium, run this as the database administrator (Supabase Studio → SQL editor, or `psql`
+with the service role):
+
+```sql
+select public.set_account_tier('friend@example.com', 'premium', 'optional note');
+select public.set_account_tier('friend@example.com', 'free');
+```
+
+The account page shows each user their plan, limits and current usage. To change the limits,
+add a migration that redefines `public.tier_limit()` and update this table.
 
 ## Privacy
 
@@ -67,9 +95,31 @@ npx supabase functions serve --env-file supabase/functions/.env
 npm run dev
 ```
 
-Magic-link emails land in Mailpit at <http://127.0.0.1:54324>. On Windows without Docker
-Desktop, Docker Engine inside WSL2 works: install `docker.io` and the Supabase CLI in the distro
-and run the `supabase` commands from the repo path under `/mnt/c`.
+Then open <http://localhost:5173>. Magic-link emails land in Mailpit at <http://127.0.0.1:54324>:
+open the message and click its link. To play two friends, use a second browser profile or a
+private window so each has its own session.
+
+#### On Windows without Docker Desktop
+
+Docker Engine inside WSL2 works and needs no Windows admin rights. In the Ubuntu distro, once:
+
+```bash
+wsl -u root -- bash -c "apt-get update && apt-get install -y docker.io && systemctl enable --now docker"
+wsl -u root -- bash -c "curl -fsSL -o /tmp/supabase.deb https://github.com/supabase/cli/releases/latest/download/supabase_linux_amd64.deb; dpkg -i /tmp/supabase.deb"
+```
+
+Then run the Supabase commands from the repo path under `/mnt/c` (the first start downloads
+about 2 GB of images), and the frontend from Windows as usual:
+
+```bash
+wsl -u root -- bash -c "cd /mnt/c/dev/Perso/D-Klothes && supabase start -x studio,vector,logflare"
+wsl -u root -- bash -c "cd /mnt/c/dev/Perso/D-Klothes && supabase functions serve --env-file supabase/functions/.env"
+npm run dev
+```
+
+The ports (54321 API, 54322 Postgres, 54324 Mailpit) are reachable from Windows at
+`127.0.0.1`. Stop everything with `supabase stop` the same way. If the `.deb` name has changed,
+pick the `linux_amd64.deb` asset from the latest release on GitHub.
 
 ### Checks
 
@@ -87,7 +137,7 @@ npm run db:types     # regenerate src/types/database.gen.ts after a migration
 
 | Function | What it does |
 | --- | --- |
-| `register-photo` | After the client uploads to `photos/<group>/<user>/<uuid>.jpg`, verifies membership, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads are deleted from Storage. |
+| `register-photo` | After the client uploads to `photos/<group>/<user>/<uuid>.jpg`, verifies membership, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads, and uploads beyond the account's photo limit, are deleted from Storage. |
 | `delete-photo` | Uploader or group owner. Removes the Storage object, confirms it is gone, then deletes the record (votes cascade). |
 | `delete-group` | Owner only, confirmed by typing the group name. Removes every object under the group prefix, then the group row. |
 | `export-account` | ZIP archive with `account.json` (profile, memberships, requests, votes, item metadata) and the user's photo files. |
