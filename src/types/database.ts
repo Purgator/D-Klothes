@@ -19,4 +19,6 @@ export type GroupFeedState = Tables<'group_feed_state'>
 export type VoteCounts = Database['public']['Functions']['group_vote_counts']['Returns'][number]
 export type MyMembershipRequest = Database['public']['Functions']['my_membership_requests']['Returns'][number]
 export type Entitlements = Database['public']['Functions']['my_entitlements']['Returns'][number]
+export type NotificationRow = Database['public']['Functions']['my_notifications']['Returns'][number]
+export type NotificationKind = Enums<'notification_kind'>
 export type AccountTier = Enums<'account_tier'>

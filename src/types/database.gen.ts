@@ -268,6 +268,79 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          actor_id: string | null;
+          created_at: string;
+          group_id: string | null;
+          id: string;
+          item_id: string | null;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          read_at: string | null;
+          request_id: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          actor_id?: string | null;
+          created_at?: string;
+          group_id?: string | null;
+          id?: string;
+          item_id?: string | null;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          read_at?: string | null;
+          request_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          actor_id?: string | null;
+          created_at?: string;
+          group_id?: string | null;
+          id?: string;
+          item_id?: string | null;
+          kind?: Database["public"]["Enums"]["notification_kind"];
+          read_at?: string | null;
+          request_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_group_id_fkey";
+            columns: ["group_id"];
+            isOneToOne: false;
+            referencedRelation: "groups";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "clothing_items";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_request_id_fkey";
+            columns: ["request_id"];
+            isOneToOne: false;
+            referencedRelation: "membership_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -408,6 +481,7 @@ export type Database = {
       is_group_owner: { Args: { p_group_id: string }; Returns: boolean };
       item_group_id: { Args: { p_item_id: string }; Returns: string };
       item_uploader_id: { Args: { p_item_id: string }; Returns: string };
+      mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number };
       my_entitlements: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -430,6 +504,21 @@ export type Database = {
           message: string;
           reviewed_at: string;
           status: Database["public"]["Enums"]["request_status"];
+        }[];
+      };
+      my_notifications: {
+        Args: { p_limit?: number };
+        Returns: {
+          actor_name: string;
+          created_at: string;
+          group_id: string;
+          group_name: string;
+          id: string;
+          item_id: string;
+          item_title: string;
+          kind: Database["public"]["Enums"]["notification_kind"];
+          read_at: string;
+          request_id: string;
         }[];
       };
       my_retention_notices: {
@@ -529,6 +618,13 @@ export type Database = {
     Enums: {
       account_tier: "free" | "premium";
       membership_role: "owner" | "member";
+      notification_kind:
+        | "membership_requested"
+        | "request_approved"
+        | "request_rejected"
+        | "member_joined"
+        | "item_added"
+        | "item_wanted";
       request_status: "pending" | "approved" | "rejected";
       vote_type: "keep" | "let_go" | "want";
     };
@@ -648,6 +744,14 @@ export const Constants = {
     Enums: {
       account_tier: ["free", "premium"],
       membership_role: ["owner", "member"],
+      notification_kind: [
+        "membership_requested",
+        "request_approved",
+        "request_rejected",
+        "member_joined",
+        "item_added",
+        "item_wanted",
+      ],
       request_status: ["pending", "approved", "rejected"],
       vote_type: ["keep", "let_go", "want"],
     },
