@@ -21,6 +21,12 @@ export const router = createRouter({
     { path: '/invite/:token', name: 'invite', component: () => import('@/views/InviteView.vue') },
     { path: '/groups/:groupId', name: 'group', component: () => import('@/views/GroupView.vue'), meta: { auth: true } },
     {
+      path: '/groups/:groupId/swipe',
+      name: 'swipe',
+      component: () => import('@/views/SwipeView.vue'),
+      meta: { auth: true },
+    },
+    {
       path: '/groups/:groupId/upload',
       name: 'upload',
       component: () => import('@/views/UploadView.vue'),

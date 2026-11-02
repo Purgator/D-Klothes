@@ -14,6 +14,9 @@ const auth = useAuth()
 const groupId = computed(() => String(route.params.groupId))
 const userId = computed(() => auth.user.value?.id ?? null)
 const feed = useGroupFeed(groupId, userId)
+const toReview = computed(
+  () => feed.items.value.filter((i) => i.uploader_id !== userId.value && !feed.myVotes.value.has(i.id)).length,
+)
 </script>
 
 <template>
@@ -24,6 +27,9 @@ const feed = useGroupFeed(groupId, userId)
       <PageTitle :title="feed.group.value.name" :back-to="{ name: 'home' }" :back-label="t('nav.home')">
         <template #actions>
           <RouterLink :to="{ name: 'group-settings', params: { groupId } }" class="btn-secondary">{{ t('group.settings') }}</RouterLink>
+          <RouterLink v-if="toReview > 0" :to="{ name: 'swipe', params: { groupId } }" class="btn-secondary">
+            {{ t('swipe.open') }} <span class="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{{ toReview }}</span>
+          </RouterLink>
           <RouterLink :to="{ name: 'upload', params: { groupId } }" class="btn-primary">{{ t('group.addPhoto') }}</RouterLink>
         </template>
       </PageTitle>
