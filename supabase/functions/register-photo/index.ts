@@ -55,6 +55,8 @@ serve(async (req) => {
     .select()
     .single()
   if (error) {
+    // Photo limit of the uploader's tier (database trigger): remove the object and say so.
+    if (error.code === 'P0013') await reject('limit_photos')
     // Duplicate registration of the same object is idempotent.
     if (error.code === '23505') {
       const { data: existing } = await admin.from('clothing_items').select().eq('storage_path', path).single()

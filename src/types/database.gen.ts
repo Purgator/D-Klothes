@@ -273,6 +273,9 @@ export type Database = {
           created_at: string;
           display_name: string;
           id: string;
+          tier: Database["public"]["Enums"]["account_tier"];
+          tier_granted_at: string | null;
+          tier_note: string | null;
           updated_at: string;
         };
         ComputedFields: never;
@@ -280,12 +283,18 @@ export type Database = {
           created_at?: string;
           display_name: string;
           id: string;
+          tier?: Database["public"]["Enums"]["account_tier"];
+          tier_granted_at?: string | null;
+          tier_note?: string | null;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
           display_name?: string;
           id?: string;
+          tier?: Database["public"]["Enums"]["account_tier"];
+          tier_granted_at?: string | null;
+          tier_note?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -335,6 +344,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      account_tier_of: {
+        Args: { p_user_id: string };
+        Returns: Database["public"]["Enums"]["account_tier"];
+      };
       cast_vote: {
         Args: { p_item_id: string; p_vote: Database["public"]["Enums"]["vote_type"] };
         Returns: {
@@ -374,6 +387,7 @@ export type Database = {
           token: string;
         }[];
       };
+      group_member_limit: { Args: { p_group_id: string }; Returns: number };
       group_vote_counts: {
         Args: { p_group_id: string };
         Returns: {
@@ -394,6 +408,18 @@ export type Database = {
       is_group_owner: { Args: { p_group_id: string }; Returns: boolean };
       item_group_id: { Args: { p_item_id: string }; Returns: string };
       item_uploader_id: { Args: { p_item_id: string }; Returns: string };
+      my_entitlements: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          active_invitations_limit: number;
+          group_members_limit: number;
+          owned_groups: number;
+          owned_groups_limit: number;
+          photos: number;
+          photos_limit: number;
+          tier: Database["public"]["Enums"]["account_tier"];
+        }[];
+      };
       my_membership_requests: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -468,13 +494,40 @@ export type Database = {
       };
       revoke_invitation: { Args: { p_invitation_id: string }; Returns: undefined };
       run_retention_cleanup: { Args: Record<PropertyKey, never>; Returns: undefined };
+      set_account_tier: {
+        Args: {
+          p_email: string;
+          p_note?: string;
+          p_tier: Database["public"]["Enums"]["account_tier"];
+        };
+        Returns: {
+          created_at: string;
+          display_name: string;
+          id: string;
+          tier: Database["public"]["Enums"]["account_tier"];
+          tier_granted_at: string | null;
+          tier_note: string | null;
+          updated_at: string;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "profiles";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       shares_group_with: { Args: { p_user_id: string }; Returns: boolean };
+      tier_limit: {
+        Args: { p_name: string; p_tier: Database["public"]["Enums"]["account_tier"] };
+        Returns: number;
+      };
       transfer_group_ownership: {
         Args: { p_group_id: string; p_new_owner: string };
         Returns: undefined;
       };
     };
     Enums: {
+      account_tier: "free" | "premium";
       membership_role: "owner" | "member";
       request_status: "pending" | "approved" | "rejected";
       vote_type: "keep" | "let_go" | "want";
@@ -593,6 +646,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_tier: ["free", "premium"],
       membership_role: ["owner", "member"],
       request_status: ["pending", "approved", "rejected"],
       vote_type: ["keep", "let_go", "want"],

@@ -16,6 +16,14 @@ export function errorKey(err: unknown): string {
         return 'errors.already_reviewed'
       case 'P0004':
         return 'errors.not_a_member'
+      case 'P0010':
+        return 'errors.limit_groups'
+      case 'P0011':
+        return 'errors.limit_invitations'
+      case 'P0012':
+        return 'errors.limit_members'
+      case 'P0013':
+        return 'errors.limit_photos'
       case '23503':
         return 'errors.owns_groups'
     }

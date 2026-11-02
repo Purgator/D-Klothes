@@ -104,6 +104,18 @@ const review = (id: string, approve: boolean) =>
 
 watch(() => feed.isOwner.value, () => void Promise.all([loadInvitations(), loadRequests()]), { immediate: true })
 
+// --- Capacity (depends on the owner's plan) --------------------------------------
+const memberLimit = ref<number | null>(null)
+watch(
+  () => feed.group.value?.id,
+  async (id) => {
+    if (!id) return
+    const { data } = await supabase.rpc('group_member_limit', { p_group_id: id })
+    memberLimit.value = typeof data === 'number' ? data : null
+  },
+  { immediate: true },
+)
+
 // --- Members -----------------------------------------------------------------
 const removeMember = (memberId: string, memberName: string) =>
   run(async () => {
@@ -162,7 +174,12 @@ const deleteGroup = () =>
 
       <!-- Members -->
       <section class="card" aria-labelledby="members-title">
-        <h2 id="members-title" class="mb-2 text-lg font-medium">{{ t('settings.members') }}</h2>
+        <div class="mb-2 flex items-baseline justify-between gap-2">
+          <h2 id="members-title" class="text-lg font-medium">{{ t('settings.members') }}</h2>
+          <span v-if="memberLimit" class="text-xs text-stone-500">
+            {{ t('settings.memberCapacity', { count: feed.members.value.length, limit: memberLimit }, feed.members.value.length) }}
+          </span>
+        </div>
         <ul class="divide-y divide-stone-100">
           <li v-for="m in feed.members.value" :key="m.user_id" class="flex items-center justify-between gap-2 py-2 text-sm">
             <span>

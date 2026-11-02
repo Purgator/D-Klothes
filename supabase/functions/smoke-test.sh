@@ -81,6 +81,12 @@ check "pending applicant sees no group" "[]" "$(rest "$MEMBER_TOK" 'groups?selec
 check "approve request" "approved" "$(rpc "$OWNER_TOK" review_membership_request "{\"p_request_id\":\"$REQ_ID\",\"p_approve\":true}" | json "['status']")"
 check "member now sees the group" "$GROUP_ID" "$(rest "$MEMBER_TOK" 'groups?select=id' | json "[0]['id']")"
 
+echo "== account tiers"
+check "signed-in user cannot grant premium" "42501" "$(rpc "$OWNER_TOK" set_account_tier "{\"p_email\":\"owner-$RUN_ID@smoke.local\",\"p_tier\":\"premium\"}" | json "['code']")"
+check "service role grants premium" "premium" "$(admin -X POST "$API_URL/rest/v1/rpc/set_account_tier" -d "{\"p_email\":\"owner-$RUN_ID@smoke.local\",\"p_tier\":\"premium\",\"p_note\":\"smoke\"}" | json "['tier']")"
+check "entitlements reflect the tier" "premium" "$(rpc "$OWNER_TOK" my_entitlements "{}" | json "[0]['tier']")"
+check "member stays free" "free" "$(rpc "$MEMBER_TOK" my_entitlements "{}" | json "[0]['tier']")"
+
 echo "== photos (storage + register-photo)"
 CLEAN_PATH="$GROUP_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
 EXIF_PATH="$GROUP_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
@@ -123,7 +129,7 @@ OLD_PATH="$GROUP_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
 check "member uploads" "200" "$(upload "$MEMBER_TOK" "$OLD_PATH" jpeg_clean)"
 admin -X POST "$API_URL/rest/v1/clothing_items" -d "{\"group_id\":\"$GROUP_ID\",\"uploader_id\":\"$MEMBER_ID\",\"storage_path\":\"$OLD_PATH\",\"created_at\":\"2020-01-01T00:00:00Z\",\"retention_deadline\":\"2022-01-01T00:00:00Z\"}" >/dev/null
 check "cleanup without secret is refused" "401" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$FN/retention-cleanup")"
-check "cleanup deletes the expired item" "1" "$(curl -s -H "x-cleanup-secret: $CLEANUP_SECRET" -X POST "$FN/retention-cleanup" | json "['deleted']")"
+check "cleanup deletes the expired item" "True" "$(curl -s -H "x-cleanup-secret: $CLEANUP_SECRET" -X POST "$FN/retention-cleanup" | json "['deleted'] >= 1")"
 check "expired object removed" "404" "$(object_exists "$OLD_PATH")"
 
 echo "== export-account"

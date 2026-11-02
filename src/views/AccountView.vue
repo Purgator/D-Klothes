@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { FunctionError, invokeFunction } from '@/lib/supabase'
+import { FunctionError, invokeFunction, supabase } from '@/lib/supabase'
+import type { Entitlements } from '@/types/database'
 import { errorKey } from '@/lib/errors'
 import { useAuth } from '@/composables/useAuth'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
@@ -14,6 +15,12 @@ const auth = useAuth()
 
 const appVersion = __APP_VERSION__
 const displayName = ref(auth.profile.value?.display_name ?? '')
+
+const entitlements = ref<Entitlements | null>(null)
+onMounted(async () => {
+  const { data } = await supabase.rpc('my_entitlements')
+  entitlements.value = data?.[0] ?? null
+})
 const saving = ref(false)
 const saved = ref(false)
 const profileError = ref<string | null>(null)
@@ -109,6 +116,31 @@ async function signOut() {
     <section class="card flex items-center justify-between gap-3">
       <h2 class="text-lg font-medium">{{ t('account.language') }}</h2>
       <LanguageSwitcher />
+    </section>
+
+    <section v-if="entitlements" class="card flex flex-col gap-2" aria-labelledby="plan-title">
+      <div class="flex items-center justify-between gap-3">
+        <h2 id="plan-title" class="text-lg font-medium">{{ t('account.plan') }}</h2>
+        <span
+          class="rounded-full px-3 py-1 text-sm font-medium"
+          :class="entitlements.tier === 'premium' ? 'bg-amber-100 text-amber-900' : 'bg-stone-100 text-stone-700'"
+        >
+          {{ entitlements.tier === 'premium' ? t('account.planPremium') : t('account.planFree') }}
+        </span>
+      </div>
+      <p class="text-sm text-stone-600">
+        {{
+          entitlements.tier === 'premium'
+            ? t('account.planPremiumHint', { note: auth.profile.value?.tier_note ? ` (${auth.profile.value.tier_note})` : '' })
+            : t('account.planFreeHint')
+        }}
+      </p>
+      <ul class="text-sm text-stone-700">
+        <li>{{ t('account.planGroups', { used: entitlements.owned_groups, limit: entitlements.owned_groups_limit }) }}</li>
+        <li>{{ t('account.planPhotos', { used: entitlements.photos, limit: entitlements.photos_limit }) }}</li>
+        <li>{{ t('account.planMembers', { limit: entitlements.group_members_limit }) }}</li>
+        <li>{{ t('account.planInvitations', { limit: entitlements.active_invitations_limit }) }}</li>
+      </ul>
     </section>
 
     <section class="card flex flex-col gap-3" aria-labelledby="data-title">
