@@ -9,6 +9,33 @@ const profile = ref<Profile | null>(null)
 const ready = ref(false)
 let initPromise: Promise<void> | null = null
 
+// The magic link usually opens in a new tab, so the return path must survive the tab:
+// localStorage, not sessionStorage. It is consumed once, after the first successful sign-in.
+const REDIRECT_KEY = 'dklothes.redirect'
+
+function isSafePath(path: string | null): path is string {
+  return !!path && path.startsWith('/') && !path.startsWith('//') && !path.startsWith('/auth/')
+}
+
+export function rememberRedirect(path: string): void {
+  if (!isSafePath(path)) return
+  try {
+    localStorage.setItem(REDIRECT_KEY, path)
+  } catch {
+    // Storage unavailable: the user lands on the home page instead.
+  }
+}
+
+export function consumeRedirect(): string {
+  try {
+    const path = localStorage.getItem(REDIRECT_KEY)
+    localStorage.removeItem(REDIRECT_KEY)
+    return isSafePath(path) ? path : '/'
+  } catch {
+    return '/'
+  }
+}
+
 async function loadProfile(userId: string): Promise<void> {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
   if (error) {
@@ -52,24 +79,9 @@ export function useAuth() {
   }
 
   async function signInWithEmail(email: string, redirectPath: string): Promise<void> {
-    const emailRedirectTo = appUrl('/auth/callback')
-    try {
-      sessionStorage.setItem('dklothes.redirect', redirectPath)
-    } catch {
-      // Falls back to the home page after sign-in.
-    }
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo } })
+    rememberRedirect(redirectPath)
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: appUrl('/auth/callback') } })
     if (error) throw error
-  }
-
-  function consumeRedirect(): string {
-    try {
-      const path = sessionStorage.getItem('dklothes.redirect')
-      sessionStorage.removeItem('dklothes.redirect')
-      return path && path.startsWith('/') && !path.startsWith('//') ? path : '/'
-    } catch {
-      return '/'
-    }
   }
 
   async function saveDisplayName(displayName: string): Promise<void> {
@@ -102,6 +114,7 @@ export function useAuth() {
     hasProfile,
     whenReady,
     signInWithEmail,
+    rememberRedirect,
     consumeRedirect,
     saveDisplayName,
     signOut,

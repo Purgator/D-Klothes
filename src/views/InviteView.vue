@@ -31,6 +31,9 @@ onMounted(async () => {
   valid.value = data[0].valid
   groupName.value = data[0].group_name
   await auth.whenReady()
+  // Remember where to come back after sign-in and onboarding, even if the magic link
+  // opens in another tab.
+  if (valid.value && !auth.hasProfile.value) auth.rememberRedirect(route.fullPath)
 })
 
 async function send() {
