@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupFeed } from '@/composables/useGroupFeed'
+import { useNotifications } from '@/composables/useNotifications'
 import ItemCard from '@/components/ItemCard.vue'
 import PageTitle from '@/components/PageTitle.vue'
 
@@ -17,6 +19,23 @@ const feed = useGroupFeed(groupId, userId)
 const toReview = computed(
   () => feed.items.value.filter((i) => i.uploader_id !== userId.value && !feed.myVotes.value.has(i.id)).length,
 )
+
+// Owners: how many membership requests are waiting (refreshed with the feed and via notifications).
+const pendingRequests = ref(0)
+const notifications = useNotifications()
+async function loadPending() {
+  if (!feed.isOwner.value) {
+    pendingRequests.value = 0
+    return
+  }
+  const { count } = await supabase
+    .from('membership_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('group_id', groupId.value)
+    .eq('status', 'pending')
+  pendingRequests.value = count ?? 0
+}
+watch([() => feed.isOwner.value, () => notifications.items.value], loadPending, { immediate: true })
 </script>
 
 <template>
@@ -47,6 +66,14 @@ const toReview = computed(
       </div>
 
       <p v-if="feed.error.value" class="alert-error mb-3" role="alert">{{ t(feed.error.value) }}</p>
+      <RouterLink
+        v-if="feed.isOwner.value && pendingRequests > 0"
+        :to="{ name: 'group-settings', params: { groupId }, hash: '#requests-title' }"
+        class="alert-warning mb-3 flex items-center justify-between gap-3 hover:border-amber-400"
+      >
+        <span>{{ t('group.pendingRequests', { count: pendingRequests }, pendingRequests) }}</span>
+        <span class="font-medium underline">{{ t('group.reviewRequests') }}</span>
+      </RouterLink>
       <p class="alert-info mb-4">{{ t('vote.advice') }}</p>
 
       <p v-if="!feed.items.value.length" class="card text-sm text-stone-600">{{ t('group.emptyFeed') }}</p>

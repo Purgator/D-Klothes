@@ -45,6 +45,12 @@ export const router = createRouter({
       meta: { auth: true },
     },
     { path: '/account', name: 'account', component: () => import('@/views/AccountView.vue'), meta: { auth: true } },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('@/views/NotificationsView.vue'),
+      meta: { auth: true },
+    },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
   ],
 })

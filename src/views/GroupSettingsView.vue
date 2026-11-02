@@ -7,6 +7,7 @@ import { errorKey } from '@/lib/errors'
 import { buildInviteUrl, invitationState } from '@/lib/invitations'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupFeed } from '@/composables/useGroupFeed'
+import { useNotifications } from '@/composables/useNotifications'
 import PageTitle from '@/components/PageTitle.vue'
 import type { Invitation, MembershipRequest } from '@/types/database'
 
@@ -84,17 +85,23 @@ const revoke = (id: string) =>
   })
 
 // --- Requests --------------------------------------------------------------
-const requests = ref<(MembershipRequest & { profile: { display_name: string } | null })[]>([])
+type RequestRow = MembershipRequest & { profile: { display_name: string } | null }
+const allRequests = ref<RequestRow[]>([])
+const requests = computed(() => allRequests.value.filter((r) => r.status === 'pending'))
+const reviewedRequests = computed(() => allRequests.value.filter((r) => r.status !== 'pending'))
 async function loadRequests() {
   if (!feed.isOwner.value) return
   const { data } = await supabase
     .from('membership_requests')
-    .select('*, profile:profiles(display_name)')
+    // Two foreign keys point at profiles (applicant, reviewer): name the applicant one.
+    .select('*, profile:profiles!membership_requests_user_id_fkey(display_name)')
     .eq('group_id', groupId.value)
-    .eq('status', 'pending')
-    .order('created_at')
-  requests.value = (data ?? []) as unknown as typeof requests.value
+    .order('created_at', { ascending: false })
+  allRequests.value = (data ?? []) as unknown as RequestRow[]
 }
+// Refresh when a notification arrives (someone applied while the page is open).
+const notifications = useNotifications()
+watch(() => notifications.items.value, () => void loadRequests())
 const review = (id: string, approve: boolean) =>
   run(async () => {
     const { error: e } = await supabase.rpc('review_membership_request', { p_request_id: id, p_approve: approve })
@@ -185,6 +192,7 @@ const deleteGroup = () =>
             <span>
               {{ m.profile?.display_name ?? '?' }}
               <span v-if="m.user_id === userId" class="text-stone-400">({{ t('group.you') }})</span>
+              <span class="ml-1 text-xs text-stone-400">{{ t('settings.joinedOn', { date: d(new Date(m.joined_at), 'short') }) }}</span>
               <span v-if="m.role === 'owner'" class="ml-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-800">{{ t('home.ownerBadge') }}</span>
             </span>
             <button
@@ -220,6 +228,23 @@ const deleteGroup = () =>
               </div>
             </li>
           </ul>
+          <details v-if="reviewedRequests.length" class="mt-3">
+            <summary class="cursor-pointer text-sm text-stone-600">{{ t('settings.requestHistory', { count: reviewedRequests.length }, reviewedRequests.length) }}</summary>
+            <ul class="mt-2 divide-y divide-stone-100 text-sm">
+              <li v-for="req in reviewedRequests" :key="req.id" class="flex items-center justify-between gap-2 py-2">
+                <span>
+                  {{ req.profile?.display_name ?? '?' }}
+                  <span class="text-xs text-stone-400">· {{ d(new Date(req.reviewed_at ?? req.created_at), 'short') }}</span>
+                </span>
+                <span
+                  class="rounded-full px-2 py-0.5 text-xs"
+                  :class="req.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'"
+                >
+                  {{ t(`settings.requestStatus.${req.status}`) }}
+                </span>
+              </li>
+            </ul>
+          </details>
         </section>
 
         <!-- Invitations -->

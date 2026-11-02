@@ -14,6 +14,7 @@ const auth = useAuth()
 
 interface GroupRow extends Group {
   memberCount: number
+  pendingRequests: number
 }
 const groups = ref<GroupRow[]>([])
 const requests = ref<MyMembershipRequest[]>([])
@@ -28,15 +29,20 @@ const createError = ref<string | null>(null)
 async function load() {
   error.value = null
   try {
-    const [g, r, n] = await Promise.all([
+    const [g, r, n, p] = await Promise.all([
       supabase.from('groups').select('*, group_members(count)').order('created_at'),
       supabase.rpc('my_membership_requests'),
       supabase.rpc('my_retention_notices'),
+      // Pending applications to the groups I own (RLS limits this to my groups).
+      supabase.from('membership_requests').select('group_id').eq('status', 'pending'),
     ])
-    for (const res of [g, r, n]) if (res.error) throw res.error
+    for (const res of [g, r, n, p]) if (res.error) throw res.error
+    const pendingByGroup = new Map<string, number>()
+    for (const row of p.data ?? []) pendingByGroup.set(row.group_id, (pendingByGroup.get(row.group_id) ?? 0) + 1)
     groups.value = ((g.data ?? []) as unknown as (Group & { group_members: { count: number }[] })[]).map((row) => ({
       ...row,
       memberCount: row.group_members?.[0]?.count ?? 0,
+      pendingRequests: row.owner_id === auth.user.value?.id ? (pendingByGroup.get(row.id) ?? 0) : 0,
     }))
     requests.value = (r.data ?? []).filter((req) => req.status !== 'approved')
     notices.value = n.data ?? []
@@ -121,8 +127,13 @@ onMounted(load)
               <span class="block font-medium">{{ group.name }}</span>
               <span class="block text-xs text-stone-500">{{ t('home.memberCount', { count: group.memberCount }, group.memberCount) }}</span>
             </span>
-            <span v-if="group.owner_id === auth.user.value?.id" class="rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-800">
-              {{ t('home.ownerBadge') }}
+            <span class="flex flex-col items-end gap-1">
+              <span v-if="group.owner_id === auth.user.value?.id" class="rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-800">
+                {{ t('home.ownerBadge') }}
+              </span>
+              <span v-if="group.pendingRequests" class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                {{ t('group.pendingRequests', { count: group.pendingRequests }, group.pendingRequests) }}
+              </span>
             </span>
           </RouterLink>
         </li>
