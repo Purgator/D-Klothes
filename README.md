@@ -29,6 +29,10 @@ and switchable at any time.
   in-app notice 30 days before. Delete sooner whenever you like.
 - **Swipe mode.** Review a group's photos one card at a time: drag right to Keep, left to Let
   go, up for I want this (buttons and arrow keys work too), with undo.
+- **Notifications.** A bell with an unread badge, updated live, and a page with history: someone
+  asks to join your group, your request is answered, a friend joins or adds a photo, someone wants
+  one of yours. Owners also see "N requests waiting" on the home page and the group feed, and the
+  group settings keep a history of approved and declined requests.
 - **Your data stays yours.** Export everything (profile, memberships, votes, photos) as a ZIP,
   or delete your account entirely.
 
