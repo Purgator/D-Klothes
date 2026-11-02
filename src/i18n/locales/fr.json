@@ -83,7 +83,9 @@
     "liveUpdates": "Mise à jour en direct",
     "refresh": "Actualiser",
     "notMember": "Vous n’êtes pas membre de ce groupe.",
-    "viewItem": "Voir la photo"
+    "viewItem": "Voir la photo",
+    "pendingRequests": "{count} demande en attente | {count} demande en attente | {count} demandes en attente",
+    "reviewRequests": "Traiter"
   },
   "vote": {
     "prompt": "Votre avis",
@@ -162,6 +164,9 @@
     "requestMessageEmpty": "(sans message)",
     "approve": "Accepter",
     "reject": "Refuser",
+    "requestHistory": "Historique ({count}) | Historique ({count}) | Historique ({count})",
+    "requestStatus": { "approved": "Acceptée", "rejected": "Refusée" },
+    "joinedOn": "membre depuis le {date}",
     "danger": "Zone sensible",
     "deleteGroup": "Supprimer le groupe",
     "deleteGroupBody": "Toutes les photos, les votes et les adhésions du groupe seront supprimés définitivement. Tapez le nom du groupe pour confirmer.",
@@ -217,6 +222,24 @@
     "planMembers": "Membres par groupe dont vous êtes propriétaire : jusqu’à {limit}",
     "planInvitations": "Liens d’invitation actifs par groupe : jusqu’à {limit}"
   },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications, rien de nouveau | Notifications, {count} non lue | Notifications, {count} non lues",
+    "empty": "Rien pour l’instant. Vous serez prévenu·e ici quand quelqu’un demande à rejoindre votre groupe, quand votre demande reçoit une réponse, quand un·e ami·e ajoute une photo et quand quelqu’un veut l’une des vôtres.",
+    "unread": "{count} non lue | {count} non lue | {count} non lues",
+    "history": "Plus tôt",
+    "markAllRead": "Tout marquer comme lu",
+    "someone": "Quelqu’un",
+    "aGroup": "un groupe",
+    "kind": {
+      "membership_requested": "{actor} demande à rejoindre « {group} ».",
+      "request_approved": "Votre demande pour « {group} » a été acceptée. Bienvenue !",
+      "request_rejected": "Votre demande pour « {group} » a été refusée.",
+      "member_joined": "{actor} a rejoint « {group} ».",
+      "item_added": "{actor} a ajouté « {item} » dans « {group} ».",
+      "item_wanted": "{actor} veut votre « {item} »."
+    }
+  },
   "swipe": {
     "title": "Swipe",
     "open": "Swipe",
@@ -229,6 +252,8 @@
   },
   "errors": {
     "unknown": "Une erreur est survenue. Réessayez.",
+    "rate_limited": "Trop d’e‑mails de connexion en peu de temps. Patientez une minute, puis réessayez.",
+    "otp_expired": "Ce lien de connexion a expiré. Demandez-en un nouveau.",
     "network_error": "Impossible de joindre le serveur. Vérifiez votre connexion.",
     "forbidden": "Vous n’avez pas l’autorisation d’effectuer cette action.",
     "duplicate": "Cet élément existe déjà.",

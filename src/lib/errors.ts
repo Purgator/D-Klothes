@@ -6,6 +6,11 @@ export function errorKey(err: unknown): string {
   if (typeof err === 'object' && err !== null) {
     const e = err as { code?: string; message?: string }
     switch (e.code) {
+      case 'over_email_send_rate_limit':
+      case 'over_request_rate_limit':
+        return 'errors.rate_limited'
+      case 'otp_expired':
+        return 'errors.otp_expired'
       case '42501':
         return 'errors.forbidden'
       case '23505':

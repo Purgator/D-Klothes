@@ -83,7 +83,9 @@
     "liveUpdates": "Live updates",
     "refresh": "Refresh",
     "notMember": "You are not a member of this group.",
-    "viewItem": "View photo"
+    "viewItem": "View photo",
+    "pendingRequests": "{count} request waiting | {count} request waiting | {count} requests waiting",
+    "reviewRequests": "Review"
   },
   "vote": {
     "prompt": "Your advice",
@@ -162,6 +164,9 @@
     "requestMessageEmpty": "(no message)",
     "approve": "Approve",
     "reject": "Reject",
+    "requestHistory": "History ({count}) | History ({count}) | History ({count})",
+    "requestStatus": { "approved": "Approved", "rejected": "Declined" },
+    "joinedOn": "joined {date}",
     "danger": "Danger zone",
     "deleteGroup": "Delete group",
     "deleteGroupBody": "All photos, votes and memberships of this group will be deleted permanently. Type the group name to confirm.",
@@ -217,6 +222,24 @@
     "planMembers": "Members per group you own: up to {limit}",
     "planInvitations": "Active invitation links per group: up to {limit}"
   },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications, no unread | Notifications, {count} unread | Notifications, {count} unread",
+    "empty": "Nothing yet. You will be told here when someone asks to join your group, when your request is answered, when a friend adds a photo, and when someone wants one of yours.",
+    "unread": "{count} unread | {count} unread | {count} unread",
+    "history": "Earlier",
+    "markAllRead": "Mark all as read",
+    "someone": "Someone",
+    "aGroup": "a group",
+    "kind": {
+      "membership_requested": "{actor} asks to join “{group}”.",
+      "request_approved": "Your request to join “{group}” was approved. Welcome!",
+      "request_rejected": "Your request to join “{group}” was declined.",
+      "member_joined": "{actor} joined “{group}”.",
+      "item_added": "{actor} added “{item}” in “{group}”.",
+      "item_wanted": "{actor} wants your “{item}”."
+    }
+  },
   "swipe": {
     "title": "Swipe",
     "open": "Swipe",
@@ -229,6 +252,8 @@
   },
   "errors": {
     "unknown": "Something went wrong. Please try again.",
+    "rate_limited": "Too many sign-in emails in a short time. Wait a minute, then try again.",
+    "otp_expired": "This sign-in link has expired. Request a new one.",
     "network_error": "Could not reach the server. Check your connection.",
     "forbidden": "You are not allowed to do that.",
     "duplicate": "This already exists.",
