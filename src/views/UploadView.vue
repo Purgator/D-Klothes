@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { PHOTOS_BUCKET, invokeFunction, supabase } from '@/lib/supabase'
 import { isAcceptedInput, preparePhoto, type PreparedPhoto } from '@/lib/image'
 import { errorKey } from '@/lib/errors'
+import { retryOnNetworkError } from '@/lib/retry'
 import { useAuth } from '@/composables/useAuth'
 import PageTitle from '@/components/PageTitle.vue'
 import type { ClothingItem } from '@/types/database'
@@ -62,12 +63,19 @@ async function submit() {
   error.value = null
   const path = `${groupId.value}/${uid}/${crypto.randomUUID()}.jpg`
   try {
-    const { error: upError } = await supabase.storage
-      .from(PHOTOS_BUCKET)
-      .upload(path, prepared.value.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: '0' })
-    if (upError) throw upError
+    // Both steps are safe to repeat: the path is unique to this attempt, and the server
+    // treats a second registration of the same object as the first one.
+    await retryOnNetworkError(async () => {
+      const { error: upError } = await supabase.storage
+        .from(PHOTOS_BUCKET)
+        .upload(path, prepared.value!.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: '0' })
+      // "Already exists" means an earlier attempt did reach the server.
+      if (upError && !/exists|duplicate/i.test(upError.message)) throw upError
+    })
     try {
-      await invokeFunction<{ item: ClothingItem }>('register-photo', { group_id: groupId.value, path, title: title.value.trim() })
+      await retryOnNetworkError(() =>
+        invokeFunction<{ item: ClothingItem }>('register-photo', { group_id: groupId.value, path, title: title.value.trim() }),
+      )
     } catch (err) {
       // The function removes rejected objects itself; this covers network failures before it ran.
       await supabase.storage.from(PHOTOS_BUCKET).remove([path])
