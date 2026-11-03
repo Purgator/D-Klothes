@@ -42,7 +42,7 @@ export function serve(handler: (req: Request) => Promise<Response>): void {
       if (err instanceof HttpError) {
         return json({ error: err.code, message: err.message }, err.status)
       }
-      console.error('unhandled error', err instanceof Error ? err.message : String(err))
+      console.error('unhandled error', err instanceof Error ? err.message : JSON.stringify(err))
       return json({ error: 'internal_error' }, 500)
     }
   })

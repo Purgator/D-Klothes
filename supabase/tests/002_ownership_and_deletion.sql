@@ -1,6 +1,6 @@
 -- pgTAP tests for ownership transfer, member removal and account-boundary constraints.
 begin;
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -65,6 +65,12 @@ values ((select id from t_group), '00000000-0000-0000-0000-000000000002', (selec
 select ok((select retention_deadline between now() + interval '2 years' - interval '1 minute' and now() + interval '2 years' + interval '1 minute'
            from public.clothing_items where storage_path = (select id from t_group) || '/00000000-0000-0000-0000-000000000002/b.jpg'),
           'retention deadline defaults to two years after upload');
+
+-- Deleting a group that still holds photos and votes: the cascade must not resurrect its feed state.
+insert into public.votes (item_id, voter_id, vote)
+values ((select id from public.clothing_items where storage_path = (select id from t_group) || '/00000000-0000-0000-0000-000000000002/b.jpg'),
+        '00000000-0000-0000-0000-000000000004', 'keep');
+select lives_ok($$delete from public.groups where id = (select id from t_group)$$, 'a group with photos and votes can be deleted');
 
 select * from finish();
 rollback;
