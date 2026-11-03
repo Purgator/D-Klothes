@@ -351,7 +351,7 @@
     "limit_members": "This group has reached the member limit of the owner's plan.",
     "limit_photos": "This account has reached its number of photos. Delete an older photo or ask the administrator for a premium account.",
     "upload_not_allowed": "Only the owner can add photos to this group.",
-    "vote_cooldown": "You just gave your advice: wait a few seconds before changing it.",
+    "vote_cooldown": "You just changed your advice: wait a few seconds before changing it again.",
     "image_processing": "Your browser could not process this image.",
     "request_failed": "The request failed. Please try again.",
     "internal_error": "Server error. Try again later.",

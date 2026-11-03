@@ -134,7 +134,7 @@ async function undo() {
   if (!item) return
   lastVoted.value = null
   try {
-    await feed.vote(item.id, null)
+    await feed.vote(item.id, null, { allowUndo: true })
     decided.value = new Set([...decided.value].filter((id) => id !== item.id))
     toast.show(t('toast.voteRemoved'), { emoji: '↩️', tone: 'info' })
   } catch (err) {

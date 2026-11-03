@@ -351,7 +351,7 @@
     "limit_members": "Ce groupe a atteint la limite de membres de la formule du propriétaire.",
     "limit_photos": "Ce compte a atteint son nombre de photos. Supprimez une photo plus ancienne ou demandez un compte premium à l’administrateur.",
     "upload_not_allowed": "Seul le propriétaire peut ajouter des photos dans ce groupe.",
-    "vote_cooldown": "Vous venez de donner votre avis : attendez quelques secondes avant de le changer.",
+    "vote_cooldown": "Vous venez de changer votre avis : attendez quelques secondes avant de le modifier à nouveau.",
     "image_processing": "Votre navigateur n’a pas pu traiter cette image.",
     "request_failed": "La requête a échoué. Réessayez.",
     "internal_error": "Erreur du serveur. Réessayez plus tard.",

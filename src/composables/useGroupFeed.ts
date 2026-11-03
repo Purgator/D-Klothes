@@ -101,18 +101,20 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     return counts.value.get(itemId) ?? emptyCounts(itemId)
   }
 
-  // When each item was last voted on, so a change of mind waits a few seconds
-  // (removing a vote is always allowed, so an undo stays instant).
+  // When each item was last changed, so any further change (set, switch or remove) waits a
+  // few seconds. The swipe page's undo passes `allowUndo` so a slip is still instant; what it
+  // undid cannot be redone before the cooldown ends.
   const votedAt = ref<Map<string, number>>(new Map())
   function cooldownFor(itemId: string): number {
     return voteCooldownRemaining(votedAt.value.get(itemId), Date.now())
   }
 
-  async function vote(itemId: string, next: VoteType | null): Promise<void> {
+  async function vote(itemId: string, next: VoteType | null, { allowUndo = false } = {}): Promise<void> {
     const previous = myVotes.value.get(itemId) ?? null
     if (previous === next) return
-    if (next && previous && cooldownFor(itemId) > 0) throw new Error('vote_cooldown')
-    if (next) votedAt.value = new Map(votedAt.value).set(itemId, Date.now())
+    const isUndo = next === null && allowUndo
+    if (!isUndo && cooldownFor(itemId) > 0) throw new Error('vote_cooldown')
+    votedAt.value = new Map(votedAt.value).set(itemId, Date.now())
     // Optimistic update, then the authoritative refetch triggered by Realtime (or below).
     const updatedCounts = new Map(counts.value)
     updatedCounts.set(itemId, applyVoteChange(countsFor(itemId), previous, next))
