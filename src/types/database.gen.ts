@@ -80,6 +80,7 @@ export type Database = {
         Row: {
           group_id: string;
           joined_at: string;
+          muted: boolean;
           role: Database["public"]["Enums"]["membership_role"];
           user_id: string;
         };
@@ -87,12 +88,14 @@ export type Database = {
         Insert: {
           group_id: string;
           joined_at?: string;
+          muted?: boolean;
           role?: Database["public"]["Enums"]["membership_role"];
           user_id: string;
         };
         Update: {
           group_id?: string;
           joined_at?: string;
+          muted?: boolean;
           role?: Database["public"]["Enums"]["membership_role"];
           user_id?: string;
         };
@@ -349,6 +352,7 @@ export type Database = {
           created_at: string;
           display_name: string;
           id: string;
+          muted_kinds: Database["public"]["Enums"]["notification_kind"][];
           tier: Database["public"]["Enums"]["account_tier"];
           tier_granted_at: string | null;
           tier_note: string | null;
@@ -359,6 +363,7 @@ export type Database = {
           created_at?: string;
           display_name: string;
           id: string;
+          muted_kinds?: Database["public"]["Enums"]["notification_kind"][];
           tier?: Database["public"]["Enums"]["account_tier"];
           tier_granted_at?: string | null;
           tier_note?: string | null;
@@ -368,6 +373,7 @@ export type Database = {
           created_at?: string;
           display_name?: string;
           id?: string;
+          muted_kinds?: Database["public"]["Enums"]["notification_kind"][];
           tier?: Database["public"]["Enums"]["account_tier"];
           tier_granted_at?: string | null;
           tier_note?: string | null;
@@ -617,6 +623,10 @@ export type Database = {
       tier_limit: {
         Args: { p_name: string; p_tier: Database["public"]["Enums"]["account_tier"] };
         Returns: number;
+      };
+      wants_notification: {
+        Args: { p_group: string; p_kind: Database["public"]["Enums"]["notification_kind"]; p_user: string };
+        Returns: boolean;
       };
       transfer_group_ownership: {
         Args: { p_group_id: string; p_new_owner: string };
