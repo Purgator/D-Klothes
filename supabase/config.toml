@@ -50,6 +50,17 @@ max_frequency = "1m0s"
 [auth.rate_limit]
 email_sent = 4
 
+# Branded sign-in emails (the same template serves magic links and first sign-ins).
+# Applied to the hosted project through the Management API, not `config push`: the
+# auth URLs above are the local ones and would overwrite the production values.
+[auth.email.template.magic_link]
+subject = "D-Klothes : votre lien de connexion / your sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "D-Klothes : votre lien de connexion / your sign-in link"
+content_path = "./supabase/templates/magic_link.html"
+
 [edge_runtime]
 enabled = true
 policy = "per_worker"

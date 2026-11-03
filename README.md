@@ -196,6 +196,12 @@ aggregate counts) is a `security definer` RPC that checks `auth.uid()` explicitl
    | `RETENTION_CLEANUP_SECRET` | shared secret checked by `retention-cleanup` |
 
 2. In Supabase Auth, set the site URL and add `<origin>/<base>/auth/callback` to the redirect URLs.
+   Apply the branded sign-in email (`supabase/templates/magic_link.html`, subject in
+   `supabase/config.toml`) to both the *Magic Link* and *Confirm signup* templates, in the
+   dashboard or through the Management API. On the free plan this needs a custom SMTP provider
+   first (Authentication → SMTP settings): without one, Supabase keeps its own templates and
+   sender name. Do not run `supabase config push` blindly: the auth URLs in `config.toml` are the
+   local ones.
 3. Store the cleanup URL and secret in Vault so the cron job can call the function:
 
    ```sql
