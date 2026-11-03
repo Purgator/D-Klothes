@@ -21,11 +21,13 @@ export const router = createRouter({
     { path: '/invite/:token', name: 'invite', component: () => import('@/views/InviteView.vue') },
     { path: '/groups/:groupId', name: 'group', component: () => import('@/views/GroupView.vue'), meta: { auth: true } },
     {
-      path: '/groups/:groupId/swipe',
-      name: 'swipe',
-      component: () => import('@/views/SwipeView.vue'),
+      path: '/groups/:groupId/photos',
+      name: 'group-photos',
+      component: () => import('@/views/GroupPhotosView.vue'),
       meta: { auth: true },
     },
+    // The review stack used to live here; it is the group page now.
+    { path: '/groups/:groupId/swipe', redirect: (to) => ({ name: 'group', params: { groupId: to.params.groupId } }) },
     {
       path: '/groups/:groupId/upload',
       name: 'upload',

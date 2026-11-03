@@ -73,7 +73,8 @@
     "untitled": "Untitled"
   },
   "group": {
-    "feed": "Group feed",
+    "photos": "All photos",
+    "toReview": "{count} to review | {count} to review | {count} to review",
     "settings": "Settings",
     "addPhoto": "Add a photo",
     "emptyFeed": "No photos yet. Add the first one!",
@@ -252,12 +253,10 @@
     }
   },
   "swipe": {
-    "title": "Swipe",
-    "open": "Swipe",
     "intro": "Drag right to Keep, left to Let go, up for I want this. You can also use the buttons or the arrow keys.",
     "remaining": "{count} photo left to review | {count} photo left to review | {count} photos left to review",
     "done": "All caught up! You have given your advice on every photo in this group.",
-    "backToFeed": "Back to the feed",
+    "seeAll": "See all photos",
     "undo": "Undo last vote",
     "cardLabel": "Photo {index} of {total}: {title}"
   },

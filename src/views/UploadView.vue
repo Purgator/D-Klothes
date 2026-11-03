@@ -99,7 +99,8 @@ async function submit() {
       await supabase.storage.from(PHOTOS_BUCKET).remove([path])
       throw err
     }
-    await router.push({ name: 'group', params: { groupId: groupId.value } })
+    // The group page hides the uploader's own photos, so land on the collection instead.
+    await router.push({ name: 'group-photos', params: { groupId: groupId.value } })
   } catch (err) {
     error.value = errorKey(err)
   } finally {
@@ -113,7 +114,7 @@ onUnmounted(revokePreview)
 
 <template>
   <section>
-    <PageTitle :title="t('upload.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('group.feed')" />
+    <PageTitle :title="t('upload.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('app.back')" />
     <p v-if="allowed === false" class="alert-warning" role="alert">{{ t('errors.upload_not_allowed') }}</p>
     <form v-else class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
       <div>

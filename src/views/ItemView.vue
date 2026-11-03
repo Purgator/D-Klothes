@@ -72,7 +72,7 @@ async function remove() {
   error.value = null
   try {
     await invokeFunction('delete-photo', { item_id: itemId.value })
-    await router.replace({ name: 'group', params: { groupId: groupId.value } })
+    await router.replace({ name: 'group-photos', params: { groupId: groupId.value } })
   } catch (err) {
     error.value = errorKey(err)
     deleting.value = false
@@ -82,7 +82,7 @@ async function remove() {
 
 <template>
   <section>
-    <PageTitle :title="item?.title || t('item.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('group.feed')" />
+    <PageTitle :title="item?.title || t('item.title')" :back-to="{ name: 'group-photos', params: { groupId } }" :back-label="t('group.photos')" />
     <p v-if="feed.loading.value" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
     <p v-else-if="!item" class="alert-error" role="alert">{{ t('errors.not_found') }}</p>
     <div v-else class="flex flex-col gap-4">

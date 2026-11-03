@@ -179,7 +179,7 @@ const deleteGroup = () =>
 
 <template>
   <section>
-    <PageTitle :title="t('settings.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('group.feed')" />
+    <PageTitle :title="t('settings.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="feed.group.value?.name ?? t('app.back')" />
     <p v-if="feed.loading.value" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
     <p v-else-if="feed.notMember.value" class="alert-error" role="alert">{{ t('group.notMember') }}</p>
     <div v-else-if="feed.group.value" class="flex flex-col gap-6">

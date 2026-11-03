@@ -73,7 +73,8 @@
     "untitled": "Sans titre"
   },
   "group": {
-    "feed": "Fil du groupe",
+    "photos": "Toutes les photos",
+    "toReview": "{count} à passer en revue | {count} à passer en revue | {count} à passer en revue",
     "settings": "Paramètres",
     "addPhoto": "Ajouter une photo",
     "emptyFeed": "Aucune photo pour l’instant. Ajoutez la première !",
@@ -252,12 +253,10 @@
     }
   },
   "swipe": {
-    "title": "Swipe",
-    "open": "Swipe",
     "intro": "Glissez à droite pour « Ça te va », à gauche pour « Ça ne te va pas », vers le haut pour « Je le veux ». Les boutons et les flèches du clavier fonctionnent aussi.",
     "remaining": "{count} photo à passer en revue | {count} photo à passer en revue | {count} photos à passer en revue",
     "done": "C’est tout ! Vous avez donné votre avis sur toutes les photos de ce groupe.",
-    "backToFeed": "Retour au fil",
+    "seeAll": "Voir toutes les photos",
     "undo": "Annuler le dernier vote",
     "cardLabel": "Photo {index} sur {total} : {title}"
   },

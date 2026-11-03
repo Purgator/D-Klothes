@@ -27,8 +27,10 @@ and switchable at any time.
 - **Live feed.** Votes and new photos show up in open sessions without reloading.
 - **Two-year retention.** Every photo shows the date it will be deleted. Uploaders get an
   in-app notice 30 days before. Delete sooner whenever you like.
-- **Swipe mode.** Review a group's photos one card at a time: drag right to Keep, left to Let
-  go, up for I want this (buttons and arrow keys work too), with undo.
+- **Review first.** A group opens on the photos you have not given your advice on yet, one
+  card at a time: drag right to Keep, left to Let go, up for I want this (buttons and arrow
+  keys work too), with undo. The full collection, with counts and everyone's photos, is one
+  tap away.
 - **Notifications.** A bell with an unread badge, updated live, and a page with history: someone
   asks to join your group, your request is answered, a friend joins or adds a photo, someone wants
   one of yours. Owners also see "N requests waiting" on the home page and the group feed, and the
