@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "D-Klothes",
-    "tagline": "Décidez ensemble quoi garder, laisser partir ou proposer à vos amis.",
+    "tagline": "Vos amis vous disent ce qui vous va, ce qui ne vous va plus, et ce qu’ils aimeraient récupérer.",
     "skipToContent": "Aller au contenu",
     "loading": "Chargement…",
     "back": "Retour",
@@ -89,20 +89,20 @@
   },
   "vote": {
     "prompt": "Votre avis",
-    "keep": "Garder",
-    "let_go": "Laisser partir",
+    "keep": "Ça te va",
+    "let_go": "Ça ne te va pas",
     "want": "Je le veux",
-    "yourVote": "Votre vote : {vote}",
-    "remove": "Retirer mon vote",
-    "ownItem": "C’est votre photo : vous ne votez pas dessus.",
-    "counts": "Garder {keep} · Laisser partir {letGo} · Je le veux {want}",
-    "keepCount": "{count} Garder",
-    "letGoCount": "{count} Laisser partir",
-    "wantCount": "{count} Je le veux",
+    "yourVote": "Votre avis : {vote}",
+    "remove": "Retirer mon avis",
+    "ownItem": "C’est votre photo : vous ne donnez pas d’avis dessus.",
+    "counts": "Ça te va {keep} · Ça ne te va pas {letGo} · Je le veux {want}",
+    "keepCount": "{count} × Ça te va",
+    "letGoCount": "{count} × Ça ne te va pas",
+    "wantCount": "{count} × Je le veux",
     "wantedBy": "Intéressé·e·s : {names}",
     "wantedByNone": "Personne ne s’est encore manifesté.",
-    "wantedByHint": "Seul·e vous voyez qui est intéressé·e. Les votes Garder et Laisser partir restent anonymes.",
-    "advice": "Un vote est un avis : rien n’est supprimé ni transféré automatiquement. Vous organisez le don directement."
+    "wantedByHint": "Seul·e vous voyez qui est intéressé·e. Les avis « Ça te va » et « Ça ne te va pas » restent anonymes.",
+    "advice": "Un avis reste un avis : rien n’est supprimé ni transféré automatiquement. Vous organisez le don directement."
   },
   "upload": {
     "title": "Ajouter une photo",
@@ -243,7 +243,7 @@
   "swipe": {
     "title": "Swipe",
     "open": "Swipe",
-    "intro": "Glissez à droite pour Garder, à gauche pour Laisser partir, vers le haut pour Je le veux. Les boutons et les flèches du clavier fonctionnent aussi.",
+    "intro": "Glissez à droite pour « Ça te va », à gauche pour « Ça ne te va pas », vers le haut pour « Je le veux ». Les boutons et les flèches du clavier fonctionnent aussi.",
     "remaining": "{count} photo à passer en revue | {count} photo à passer en revue | {count} photos à passer en revue",
     "done": "C’est tout ! Vous avez donné votre avis sur toutes les photos de ce groupe.",
     "backToFeed": "Retour au fil",
