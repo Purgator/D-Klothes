@@ -2,6 +2,17 @@ import type { VoteCounts, VoteType } from '@/types/database'
 
 export const VOTE_TYPES: readonly VoteType[] = ['keep', 'let_go', 'want'] as const
 
+export const VOTE_EMOJI: Record<VoteType, string> = { keep: '👍', let_go: '👋', want: '😍' }
+
+/** How long a member waits before changing an advice they just gave (frontend only). */
+export const VOTE_COOLDOWN_MS = 5000
+
+/** Milliseconds left before the advice on an item can be changed again (0 when free). */
+export function voteCooldownRemaining(lastVotedAt: number | undefined, now: number, cooldownMs = VOTE_COOLDOWN_MS): number {
+  if (lastVotedAt === undefined) return 0
+  return Math.max(0, lastVotedAt + cooldownMs - now)
+}
+
 export function emptyCounts(itemId: string): VoteCounts {
   return { item_id: itemId, keep_count: 0, let_go_count: 0, want_count: 0 }
 }

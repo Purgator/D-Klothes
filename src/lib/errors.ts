@@ -36,6 +36,7 @@ export function errorKey(err: unknown): string {
     }
     if (e.message && /fetch|network/i.test(e.message)) return 'errors.network_error'
     if (e.message === 'photo_too_large') return 'errors.too_large'
+    if (e.message === 'vote_cooldown') return 'errors.vote_cooldown'
     if (e.message === 'canvas_unsupported' || e.message === 'encode_failed') return 'errors.image_processing'
   }
   return 'errors.unknown'

@@ -3,6 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { applyVoteChange, emptyCounts, indexCounts } from '@/lib/votes'
 import { errorKey } from '@/lib/errors'
+import { VOTE_COOLDOWN_MS, voteCooldownRemaining } from '@/lib/votes'
 import type { ClothingItem, Group, GroupMember, Profile, VoteCounts, VoteType } from '@/types/database'
 
 export interface MemberWithProfile extends GroupMember {
@@ -100,9 +101,18 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     return counts.value.get(itemId) ?? emptyCounts(itemId)
   }
 
+  // When each item was last voted on, so a change of mind waits a few seconds
+  // (removing a vote is always allowed, so an undo stays instant).
+  const votedAt = ref<Map<string, number>>(new Map())
+  function cooldownFor(itemId: string): number {
+    return voteCooldownRemaining(votedAt.value.get(itemId), Date.now())
+  }
+
   async function vote(itemId: string, next: VoteType | null): Promise<void> {
     const previous = myVotes.value.get(itemId) ?? null
     if (previous === next) return
+    if (next && previous && cooldownFor(itemId) > 0) throw new Error('vote_cooldown')
+    if (next) votedAt.value = new Map(votedAt.value).set(itemId, Date.now())
     // Optimistic update, then the authoritative refetch triggered by Realtime (or below).
     const updatedCounts = new Map(counts.value)
     updatedCounts.set(itemId, applyVoteChange(countsFor(itemId), previous, next))
@@ -138,5 +148,5 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     unsubscribe()
   })
 
-  return { group, members, items, counts, myVotes, loading, error, notMember, live, isOwner, canUpload, memberNames, load, countsFor, vote }
+  return { group, members, items, counts, myVotes, loading, error, notMember, live, isOwner, canUpload, memberNames, load, countsFor, vote, cooldownFor, VOTE_COOLDOWN_MS }
 }

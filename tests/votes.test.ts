@@ -26,3 +26,13 @@ describe('vote helpers', () => {
     expect(applyVoteChange(emptyCounts('x'), null, 'let_go').let_go_count).toBe(1)
   })
 })
+
+describe('vote cooldown', () => {
+  it('blocks a change of mind for a few seconds, then frees it', async () => {
+    const { voteCooldownRemaining, VOTE_COOLDOWN_MS } = await import('@/lib/votes')
+    expect(voteCooldownRemaining(undefined, 1000)).toBe(0)
+    expect(voteCooldownRemaining(1000, 1000)).toBe(VOTE_COOLDOWN_MS)
+    expect(voteCooldownRemaining(1000, 1000 + VOTE_COOLDOWN_MS)).toBe(0)
+    expect(voteCooldownRemaining(1000, 1000 + VOTE_COOLDOWN_MS + 1)).toBe(0)
+  })
+})

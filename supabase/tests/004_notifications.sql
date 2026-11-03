@@ -1,6 +1,6 @@
 -- pgTAP tests for notifications: triggers, privacy, read marking, applicant visibility.
 begin;
-select plan(16);
+select plan(18);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -60,6 +60,9 @@ select tests.login('00000000-0000-0000-0000-000000000022');
 select is((select count(*) from public.notifications where kind = 'item_added'), 1::bigint, 'members are told about a new photo');
 select lives_ok($$select public.cast_vote('30000000-0000-0000-0000-000000000001', 'want')$$, 'member wants the item');
 select lives_ok($$select public.cast_vote('30000000-0000-0000-0000-000000000001', 'want')$$, 'repeating the same vote is harmless');
+-- Changing one's mind back and forth does not notify again.
+select lives_ok($$select public.cast_vote('30000000-0000-0000-0000-000000000001', 'keep')$$, 'member changes to keep');
+select lives_ok($$select public.cast_vote('30000000-0000-0000-0000-000000000001', 'want')$$, 'member wants it again');
 select tests.login('00000000-0000-0000-0000-000000000021');
 select is((select count(*) from public.notifications where kind = 'item_wanted'), 1::bigint,
   'the uploader gets exactly one item_wanted notification');
