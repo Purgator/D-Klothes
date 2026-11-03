@@ -206,7 +206,7 @@
     "profile": "Profile",
     "email": "Email",
     "displayName": "Display name",
-    "saved": "Saved.",
+    "displayNameFixed": "The display name is chosen at sign-up and cannot be changed.",
     "language": "Interface language",
     "data": "Your data",
     "exportTitle": "Export my data",

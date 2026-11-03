@@ -206,7 +206,7 @@
     "profile": "Profil",
     "email": "E‑mail",
     "displayName": "Nom affiché",
-    "saved": "Enregistré.",
+    "displayNameFixed": "Le nom affiché est choisi à l’inscription et ne se modifie pas.",
     "language": "Langue de l’interface",
     "data": "Vos données",
     "exportTitle": "Exporter mes données",

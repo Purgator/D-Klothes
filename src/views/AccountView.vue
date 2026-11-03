@@ -14,31 +14,12 @@ const router = useRouter()
 const auth = useAuth()
 
 const appVersion = __APP_VERSION__
-const displayName = ref(auth.profile.value?.display_name ?? '')
 
 const entitlements = ref<Entitlements | null>(null)
 onMounted(async () => {
   const { data } = await supabase.rpc('my_entitlements')
   entitlements.value = data?.[0] ?? null
 })
-const saving = ref(false)
-const saved = ref(false)
-const profileError = ref<string | null>(null)
-
-async function saveProfile() {
-  saving.value = true
-  saved.value = false
-  profileError.value = null
-  try {
-    await auth.saveDisplayName(displayName.value)
-    saved.value = true
-  } catch (err) {
-    profileError.value = errorKey(err)
-  } finally {
-    saving.value = false
-  }
-}
-
 const exporting = ref(false)
 const exportError = ref<string | null>(null)
 async function exportData() {
@@ -101,17 +82,16 @@ async function signOut() {
   <section class="flex flex-col gap-6">
     <PageTitle :title="t('account.title')" :back-to="{ name: 'home' }" :back-label="t('nav.home')" />
 
-    <form class="card flex flex-col gap-3" novalidate @submit.prevent="saveProfile">
-      <h2 class="text-lg font-medium">{{ t('account.profile') }}</h2>
-      <p class="text-sm text-stone-600">{{ t('account.email') }} : {{ auth.user.value?.email }}</p>
-      <div>
-        <label for="account-name" class="label">{{ t('account.displayName') }}</label>
-        <input id="account-name" v-model="displayName" type="text" maxlength="50" required class="input" autocomplete="nickname" />
-      </div>
-      <p v-if="profileError" class="alert-error" role="alert">{{ t(profileError) }}</p>
-      <p v-else-if="saved" class="alert-info" role="status">{{ t('account.saved') }}</p>
-      <button type="submit" class="btn-primary self-start" :disabled="saving || !displayName.trim()">{{ t('app.save') }}</button>
-    </form>
+    <section class="card flex flex-col gap-2" aria-labelledby="profile-title">
+      <h2 id="profile-title" class="text-lg font-medium">{{ t('account.profile') }}</h2>
+      <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+        <dt class="text-stone-500">{{ t('account.displayName') }}</dt>
+        <dd class="font-medium">{{ auth.profile.value?.display_name }}</dd>
+        <dt class="text-stone-500">{{ t('account.email') }}</dt>
+        <dd>{{ auth.user.value?.email }}</dd>
+      </dl>
+      <p class="text-xs text-stone-500">{{ t('account.displayNameFixed') }}</p>
+    </section>
 
     <section class="card flex items-center justify-between gap-3">
       <h2 class="text-lg font-medium">{{ t('account.language') }}</h2>
