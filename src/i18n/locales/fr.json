@@ -110,8 +110,14 @@
     "changePhoto": "Changer de photo",
     "itemTitle": "Titre (facultatif)",
     "itemTitlePlaceholder": "Ex. Veste en jean bleue",
-    "preparing": "Préparation de la photo…",
     "uploading": "Envoi…",
+    "stepOf": "Étape {current} sur {total}",
+    "step": {
+      "decoding": "Lecture de la photo…",
+      "compressing": "Compression et retrait des métadonnées…",
+      "uploading": "Envoi de la photo…",
+      "registering": "Vérification et publication…"
+    },
     "ready": "Prête : {size} ({width} × {height})",
     "retentionNotice": "La photo sera conservée jusqu’au {date} (2 ans), puis supprimée automatiquement, sauf si vous la supprimez avant.",
     "privacyNotice": "La photo est recompressée (2 Mio max) et ses métadonnées (lieu, appareil, date) sont retirées avant l’envoi.",

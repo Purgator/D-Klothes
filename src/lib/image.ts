@@ -22,10 +22,18 @@ export function fitWithin(width: number, height: number, maxEdge = MAX_PHOTO_EDG
 /** Quality steps tried in order until the JPEG fits the size limit. */
 export const QUALITY_STEPS = [0.88, 0.8, 0.72, 0.64, 0.56, 0.48, 0.4] as const
 
-export async function preparePhoto(file: File, maxBytes = MAX_PHOTO_BYTES): Promise<PreparedPhoto> {
+export type PreparePhase = 'decoding' | 'compressing'
+
+export async function preparePhoto(
+  file: File,
+  maxBytes = MAX_PHOTO_BYTES,
+  onPhase: (phase: PreparePhase) => void = () => {},
+): Promise<PreparedPhoto> {
+  onPhase('decoding')
   // `from-image` applies the EXIF orientation before the metadata is discarded.
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
   try {
+    onPhase('compressing')
     let edge = MAX_PHOTO_EDGE
     for (let attempt = 0; attempt < 4; attempt++) {
       const { width, height } = fitWithin(bitmap.width, bitmap.height, edge)

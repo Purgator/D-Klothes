@@ -110,8 +110,14 @@
     "changePhoto": "Change photo",
     "itemTitle": "Title (optional)",
     "itemTitlePlaceholder": "e.g. Blue denim jacket",
-    "preparing": "Preparing photo…",
     "uploading": "Uploading…",
+    "stepOf": "Step {current} of {total}",
+    "step": {
+      "decoding": "Reading the photo…",
+      "compressing": "Compressing and stripping metadata…",
+      "uploading": "Uploading the photo…",
+      "registering": "Checking and publishing…"
+    },
     "ready": "Ready: {size} ({width} × {height})",
     "retentionNotice": "The photo will be kept until {date} (2 years) and then deleted automatically, unless you delete it sooner.",
     "privacyNotice": "The photo is recompressed (2 MiB max) and its metadata (location, device, date) is removed before upload.",

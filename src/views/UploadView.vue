@@ -23,6 +23,13 @@ const preparing = ref(false)
 const uploading = ref(false)
 const error = ref<string | null>(null)
 
+// Progress steps shown while the photo is processed and sent.
+type Step = 'decoding' | 'compressing' | 'uploading' | 'registering'
+const STEPS: Step[] = ['decoding', 'compressing', 'uploading', 'registering']
+const step = ref<Step | null>(null)
+const stepIndex = computed(() => (step.value ? STEPS.indexOf(step.value) : -1))
+const progressPercent = computed(() => Math.round(((stepIndex.value + 1) / (STEPS.length + 1)) * 100))
+
 const retentionDate = computed(() => {
   const date = new Date()
   date.setFullYear(date.getFullYear() + 2)
@@ -45,14 +52,16 @@ async function onFile(event: Event) {
     return
   }
   preparing.value = true
+  step.value = 'decoding'
   try {
-    const result = await preparePhoto(file)
+    const result = await preparePhoto(file, undefined, (phase) => (step.value = phase))
     prepared.value = result
     previewUrl.value = URL.createObjectURL(result.blob)
   } catch (err) {
     error.value = errorKey(err)
   } finally {
     preparing.value = false
+    step.value = null
   }
 }
 
@@ -60,6 +69,7 @@ async function submit() {
   const uid = auth.user.value?.id
   if (!prepared.value || !uid) return
   uploading.value = true
+  step.value = 'uploading'
   error.value = null
   const path = `${groupId.value}/${uid}/${crypto.randomUUID()}.jpg`
   try {
@@ -72,6 +82,7 @@ async function submit() {
       // "Already exists" means an earlier attempt did reach the server.
       if (upError && !/exists|duplicate/i.test(upError.message)) throw upError
     })
+    step.value = 'registering'
     try {
       await retryOnNetworkError(() =>
         invokeFunction<{ item: ClothingItem }>('register-photo', { group_id: groupId.value, path, title: title.value.trim() }),
@@ -86,6 +97,7 @@ async function submit() {
     error.value = errorKey(err)
   } finally {
     uploading.value = false
+    step.value = null
   }
 }
 
@@ -109,7 +121,16 @@ onUnmounted(revokePreview)
         <p class="help">{{ t('upload.privacyNotice') }}</p>
       </div>
 
-      <p v-if="preparing" role="status" class="text-sm text-stone-600">{{ t('upload.preparing') }}</p>
+      <div v-if="step" role="status" aria-live="polite" class="flex flex-col gap-2 rounded-lg border border-brand-100 bg-brand-50 p-3">
+        <div class="flex items-center gap-2 text-sm text-brand-800">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-brand-700 border-t-transparent" aria-hidden="true"></span>
+          <span>{{ t(`upload.step.${step}`) }}</span>
+          <span class="ml-auto text-xs text-brand-700">{{ t('upload.stepOf', { current: stepIndex + 1, total: STEPS.length }) }}</span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-white" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
+          <div class="h-full rounded-full bg-brand-700 transition-all duration-500" :style="{ width: `${progressPercent}%` }"></div>
+        </div>
+      </div>
       <div v-if="previewUrl && prepared" class="flex flex-col gap-2">
         <img :src="previewUrl" :alt="t('upload.previewAlt')" class="max-h-96 w-full rounded-lg object-contain bg-stone-100" />
         <p class="text-xs text-stone-500">
