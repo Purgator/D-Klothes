@@ -52,7 +52,9 @@ async function submit() {
 
     <p v-else-if="!isConfigured" class="alert-warning" role="alert">{{ t('app.notConfigured') }}</p>
 
-    <form v-else class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
+    <!-- Named and typed like a plain sign-in form so browsers, password managers and
+         email-alias extensions recognise the field and offer to fill or remember it. -->
+    <form v-else id="signin" name="signin" method="post" action="." class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
       <p class="text-sm text-stone-700">{{ t('auth.intro') }}</p>
       <div>
         <label for="email" class="label">{{ t('auth.email') }}</label>
@@ -61,8 +63,11 @@ async function submit() {
           v-model="email"
           type="email"
           name="email"
-          autocomplete="email"
+          autocomplete="username"
           inputmode="email"
+          enterkeyhint="send"
+          spellcheck="false"
+          autocapitalize="off"
           required
           class="input"
           :placeholder="t('auth.emailPlaceholder')"
