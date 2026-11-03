@@ -181,6 +181,11 @@
   "settings": {
     "title": "Paramètres du groupe",
     "rename": "Nom du groupe",
+    "notifications": "Notifications de ce groupe",
+    "notifyMe": "Me prévenir de ce qui se passe dans ce groupe",
+    "notifyHint": "Décochez pour couper les notifications de ce groupe uniquement (nouvelles photos, nouveaux membres, demandes, envies). Les autres groupes ne changent pas.",
+    "mutedOn": "Groupe mis en sourdine",
+    "mutedOff": "Notifications réactivées",
     "members": "Membres",
     "memberCapacity": "{count} place utilisée sur {limit} | {count} place utilisée sur {limit} | {count} places utilisées sur {limit}",
     "remove": "Retirer",
@@ -248,6 +253,21 @@
     "about": "À propos de D-Klothes",
     "aboutBody": "La page d’accueil explique l’app et comment l’installer. Partagez-la à vos amis.",
     "openWelcome": "Voir la page d’accueil",
+    "notifications": "Notifications",
+    "notificationsBody": "Choisissez ce dont vous voulez être prévenu·e. Décochez pour ne plus recevoir ce type de notification.",
+    "notificationKind": {
+      "membership_requested": "Quelqu’un demande à rejoindre un groupe dont je suis propriétaire",
+      "request_approved": "Ma demande d’adhésion est acceptée",
+      "request_rejected": "Ma demande d’adhésion est refusée",
+      "member_joined": "Quelqu’un rejoint un de mes groupes",
+      "item_added": "Un·e ami·e ajoute une photo",
+      "item_wanted": "Quelqu’un veut un de mes vêtements"
+    },
+    "notificationsGroupHint": "Vous pouvez aussi couper les notifications d’un seul groupe depuis ses paramètres.",
+    "feedback": "Retours",
+    "haptics": "Vibrer légèrement à chaque action (avis, photo publiée, fin de revue)",
+    "hapticsHint": "Réglage propre à cet appareil.",
+    "hapticsUnsupported": "Cet appareil ou ce navigateur ne sait pas vibrer.",
     "data": "Vos données",
     "exportTitle": "Exporter mes données",
     "exportBody": "Téléchargez une archive ZIP contenant votre profil, vos adhésions, vos votes et vos photos.",
@@ -290,6 +310,10 @@
       "member_joined": "{actor} a rejoint « {group} ».",
       "item_added": "{actor} a ajouté « {item} » dans « {group} ».",
       "item_wanted": "{actor} veut votre « {item} »."
+    },
+    "many": {
+      "item_wanted": "{actor} et {others} autre veulent votre « {item} ». | {actor} et {others} autre veulent votre « {item} ». | {actor} et {others} autres veulent votre « {item} ».",
+      "item_added": "{actor} a ajouté {count} photos dans « {group} ». | {actor} a ajouté {count} photo dans « {group} ». | {actor} a ajouté {count} photos dans « {group} »."
     }
   },
   "swipe": {

@@ -181,6 +181,11 @@
   "settings": {
     "title": "Group settings",
     "rename": "Group name",
+    "notifications": "Notifications for this group",
+    "notifyMe": "Tell me what happens in this group",
+    "notifyHint": "Untick to silence this group only (new photos, new members, requests, interest). Other groups are unchanged.",
+    "mutedOn": "Group muted",
+    "mutedOff": "Notifications back on",
     "members": "Members",
     "memberCapacity": "{count} of {limit} seats used | {count} of {limit} seats used | {count} of {limit} seats used",
     "remove": "Remove",
@@ -248,6 +253,21 @@
     "about": "About D-Klothes",
     "aboutBody": "The welcome page explains the app and how to install it. Share it with your friends.",
     "openWelcome": "Open the welcome page",
+    "notifications": "Notifications",
+    "notificationsBody": "Choose what you want to be told about. Untick to stop receiving that kind of notification.",
+    "notificationKind": {
+      "membership_requested": "Someone asks to join a group I own",
+      "request_approved": "My membership request is approved",
+      "request_rejected": "My membership request is declined",
+      "member_joined": "Someone joins one of my groups",
+      "item_added": "A friend adds a photo",
+      "item_wanted": "Someone wants one of my items"
+    },
+    "notificationsGroupHint": "You can also silence a single group from its settings.",
+    "feedback": "Feedback",
+    "haptics": "Vibrate briefly on each action (advice, photo published, review done)",
+    "hapticsHint": "Setting for this device only.",
+    "hapticsUnsupported": "This device or browser cannot vibrate.",
     "data": "Your data",
     "exportTitle": "Export my data",
     "exportBody": "Download a ZIP archive with your profile, memberships, votes and photos.",
@@ -290,6 +310,10 @@
       "member_joined": "{actor} joined “{group}”.",
       "item_added": "{actor} added “{item}” in “{group}”.",
       "item_wanted": "{actor} wants your “{item}”."
+    },
+    "many": {
+      "item_wanted": "{actor} and {others} other want your “{item}”. | {actor} and {others} other want your “{item}”. | {actor} and {others} others want your “{item}”.",
+      "item_added": "{actor} added {count} photos in “{group}”. | {actor} added {count} photo in “{group}”. | {actor} added {count} photos in “{group}”."
     }
   },
   "swipe": {

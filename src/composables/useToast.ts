@@ -31,8 +31,32 @@ export function useToast() {
   return { toasts, show, dismiss }
 }
 
-/** Short vibration on devices that support it; silent elsewhere. */
+const HAPTICS_KEY = 'dklothes.haptics'
+const hapticsEnabled = ref(readHaptics())
+function readHaptics(): boolean {
+  try {
+    return localStorage.getItem(HAPTICS_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+/** Haptic feedback preference (per device, stored in the browser). */
+export function useHaptics() {
+  function set(enabled: boolean) {
+    hapticsEnabled.value = enabled
+    try {
+      localStorage.setItem(HAPTICS_KEY, enabled ? 'on' : 'off')
+    } catch {
+      // Storage unavailable: the choice lasts for this session only.
+    }
+  }
+  const supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
+  return { enabled: hapticsEnabled, supported, set }
+}
+
+/** Short vibration on devices that support it, when enabled; silent elsewhere. */
 export function haptic(pattern: number | number[] = 12) {
+  if (!hapticsEnabled.value) return
   try {
     navigator.vibrate?.(pattern)
   } catch {

@@ -68,6 +68,17 @@ const saveUploadPolicy = (value: boolean) =>
     toast.show(t('toast.saved'), { emoji: '✅' })
   })
 
+// --- Mute (any member, for themselves) -----------------------------------------------
+const muted = computed(() => feed.members.value.find((m) => m.user_id === userId.value)?.muted ?? false)
+const setMuted = (value: boolean) =>
+  run(async () => {
+    if (!userId.value) return
+    const { error: e } = await supabase.from('group_members').update({ muted: value }).eq('group_id', groupId.value).eq('user_id', userId.value)
+    if (e) throw e
+    await feed.load()
+    toast.show(value ? t('settings.mutedOn') : t('settings.mutedOff'), { emoji: value ? '🔕' : '🔔', tone: 'info' })
+  })
+
 // --- Invitations -------------------------------------------------------------
 const invitations = ref<Invitation[]>([])
 const newInvite = ref<{ url: string; expires_at: string } | null>(null)
@@ -212,6 +223,16 @@ const deleteGroup = () =>
         </label>
       </fieldset>
       <p v-else-if="!feed.canUpload.value" class="text-sm text-stone-500">{{ t('group.uploadOwnerOnly') }}</p>
+
+      <!-- Notifications for this group (every member) -->
+      <section class="card flex flex-col gap-2" aria-labelledby="mute-title">
+        <h2 id="mute-title" class="text-lg font-medium">{{ t('settings.notifications') }}</h2>
+        <label class="flex items-center gap-3 text-sm">
+          <input type="checkbox" class="h-5 w-5 accent-brand-700" :checked="!muted" :disabled="busy" @change="setMuted(!($event.target as HTMLInputElement).checked)" />
+          <span>{{ t('settings.notifyMe') }}</span>
+        </label>
+        <p class="help">{{ t('settings.notifyHint') }}</p>
+      </section>
 
       <!-- Members -->
       <section class="card" aria-labelledby="members-title">

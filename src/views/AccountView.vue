@@ -6,6 +6,8 @@ import { FunctionError, invokeFunction, supabase } from '@/lib/supabase'
 import type { Entitlements } from '@/types/database'
 import { errorKey } from '@/lib/errors'
 import { useAuth } from '@/composables/useAuth'
+import { useHaptics, useToast } from '@/composables/useToast'
+import type { NotificationKind } from '@/types/database'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import ShareButton from '@/components/ShareButton.vue'
 import PageTitle from '@/components/PageTitle.vue'
@@ -15,6 +17,33 @@ const router = useRouter()
 const auth = useAuth()
 
 const appVersion = __APP_VERSION__
+const toast = useToast()
+
+// Notification kinds (server-side preference) and haptics (this device only).
+const NOTIFICATION_KINDS: NotificationKind[] = ['membership_requested', 'request_approved', 'request_rejected', 'member_joined', 'item_added', 'item_wanted']
+const mutedKinds = computed(() => new Set(auth.profile.value?.muted_kinds ?? []))
+const savingKinds = ref(false)
+const kindsError = ref<string | null>(null)
+async function setKind(kind: NotificationKind, enabled: boolean) {
+  const uid = auth.user.value?.id
+  if (!uid) return
+  const next = new Set(mutedKinds.value)
+  if (enabled) next.delete(kind)
+  else next.add(kind)
+  savingKinds.value = true
+  kindsError.value = null
+  try {
+    const { error } = await supabase.from('profiles').update({ muted_kinds: [...next] }).eq('id', uid)
+    if (error) throw error
+    await auth.refreshProfile()
+    toast.show(t('toast.saved'), { emoji: '✅' })
+  } catch (err) {
+    kindsError.value = errorKey(err)
+  } finally {
+    savingKinds.value = false
+  }
+}
+const haptics = useHaptics()
 
 const entitlements = ref<Entitlements | null>(null)
 onMounted(async () => {
@@ -97,6 +126,30 @@ async function signOut() {
     <section class="card flex items-center justify-between gap-3">
       <h2 class="text-lg font-medium">{{ t('account.language') }}</h2>
       <LanguageSwitcher />
+    </section>
+
+    <section class="card flex flex-col gap-3" aria-labelledby="notif-title">
+      <h2 id="notif-title" class="text-lg font-medium">{{ t('account.notifications') }}</h2>
+      <p class="text-sm text-stone-600">{{ t('account.notificationsBody') }}</p>
+      <ul class="flex flex-col gap-2">
+        <li v-for="kind in NOTIFICATION_KINDS" :key="kind">
+          <label class="flex items-center gap-3 text-sm">
+            <input type="checkbox" class="h-5 w-5 accent-brand-700" :checked="!mutedKinds.has(kind)" :disabled="savingKinds" @change="setKind(kind, ($event.target as HTMLInputElement).checked)" />
+            <span>{{ t(`account.notificationKind.${kind}`) }}</span>
+          </label>
+        </li>
+      </ul>
+      <p v-if="kindsError" class="alert-error" role="alert">{{ t(kindsError) }}</p>
+      <p class="help">{{ t('account.notificationsGroupHint') }}</p>
+    </section>
+
+    <section class="card flex flex-col gap-2" aria-labelledby="feel-title">
+      <h2 id="feel-title" class="text-lg font-medium">{{ t('account.feedback') }}</h2>
+      <label class="flex items-center gap-3 text-sm">
+        <input type="checkbox" class="h-5 w-5 accent-brand-700" :checked="haptics.enabled.value" :disabled="!haptics.supported" @change="haptics.set(($event.target as HTMLInputElement).checked)" />
+        <span>{{ t('account.haptics') }}</span>
+      </label>
+      <p class="help">{{ haptics.supported ? t('account.hapticsHint') : t('account.hapticsUnsupported') }}</p>
     </section>
 
     <section class="card flex flex-wrap items-center justify-between gap-3">

@@ -61,8 +61,12 @@ address; you receive a link to click, there is no password.
   tap away.
 - **Notifications.** A bell with an unread badge, updated live, and a page with history: someone
   asks to join your group, your request is answered, a friend joins or adds a photo, someone wants
-  one of yours. Owners also see "N requests waiting" on the home page and the group feed, and the
-  group settings keep a history of approved and declined requests.
+  one of yours. Several people wanting the same item, or several photos added in a row by the
+  same friend, show as one line. Owners also see "N requests waiting" on the home page and the
+  group page, and the group settings keep a history of approved and declined requests.
+- **Quiet when you want.** Choose on the account page which kinds of notification you receive,
+  mute a single group from its settings, and turn the haptic feedback off per device. Withdrawing
+  an "I want this" settles the uploader's notification by itself.
 - **Your data stays yours.** Export everything (profile, memberships, votes, photos) as a ZIP,
   or delete your account entirely.
 
