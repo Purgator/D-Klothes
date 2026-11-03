@@ -43,7 +43,7 @@ async function signOut() {
           <span class="hidden sm:inline">{{ auth.profile.value?.display_name ?? t('nav.account') }}</span>
           <span class="sm:hidden" aria-hidden="true">👤</span>
         </RouterLink>
-        <button type="button" class="btn-secondary px-3" :aria-label="t('nav.signOut')" :title="t('nav.signOut')" @click="signOut">
+        <button type="button" class="btn-danger px-3" :aria-label="t('nav.signOut')" :title="t('nav.signOut')" @click="signOut">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true">
             <path d="M10 17l5-5-5-5" />
             <path d="M15 12H3" />
