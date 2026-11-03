@@ -2,6 +2,7 @@ import { computed, ref, watch } from 'vue'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
+import { groupNotifications } from '@/lib/notifications'
 import type { NotificationRow } from '@/types/database'
 
 // Shared notification state (one list, one subscription) for the whole app.
@@ -66,7 +67,8 @@ export function useNotifications() {
     )
   }
 
-  const unreadCount = computed(() => items.value.filter((n) => !n.read_at).length)
+  const groups = computed(() => groupNotifications(items.value))
+  const unreadCount = computed(() => groups.value.filter((g) => g.unread).length)
 
   async function markRead(ids?: string[]) {
     const now = new Date().toISOString()
@@ -75,5 +77,5 @@ export function useNotifications() {
     scheduleLoad()
   }
 
-  return { items, unreadCount, loading, loaded, load, markRead }
+  return { items, groups, unreadCount, loading, loaded, load, markRead }
 }
