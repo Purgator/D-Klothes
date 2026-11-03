@@ -29,6 +29,8 @@ export function errorKey(err: unknown): string {
         return 'errors.limit_members'
       case 'P0013':
         return 'errors.limit_photos'
+      case 'P0014':
+        return 'errors.upload_not_allowed'
       case '23503':
         return 'errors.owns_groups'
     }

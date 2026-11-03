@@ -49,6 +49,21 @@ const rename = () =>
     await feed.load()
   })
 
+// --- Upload policy (owner) -----------------------------------------------------
+const membersCanUpload = ref(true)
+watch(
+  () => feed.group.value?.members_can_upload,
+  (v) => (membersCanUpload.value = v ?? true),
+  { immediate: true },
+)
+const saveUploadPolicy = (value: boolean) =>
+  run(async () => {
+    membersCanUpload.value = value
+    const { error: e } = await supabase.from('groups').update({ members_can_upload: value }).eq('id', groupId.value)
+    if (e) throw e
+    await feed.load()
+  })
+
 // --- Invitations -------------------------------------------------------------
 const invitations = ref<Invitation[]>([])
 const newInvite = ref<{ url: string; expires_at: string } | null>(null)
@@ -178,6 +193,20 @@ const deleteGroup = () =>
           <button type="submit" class="btn-primary" :disabled="busy || !name.trim() || name.trim() === feed.group.value.name">{{ t('app.save') }}</button>
         </div>
       </form>
+
+      <!-- Upload policy (owner) -->
+      <fieldset v-if="feed.isOwner.value" class="card flex flex-col gap-2" :disabled="busy">
+        <legend class="label">{{ t('group.uploadPolicy') }}</legend>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="radio" name="settings-upload-policy" :checked="membersCanUpload" @change="saveUploadPolicy(true)" />
+          {{ t('group.uploadPolicyEveryone') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="radio" name="settings-upload-policy" :checked="!membersCanUpload" @change="saveUploadPolicy(false)" />
+          {{ t('group.uploadPolicyOwner') }}
+        </label>
+      </fieldset>
+      <p v-else-if="!feed.canUpload.value" class="text-sm text-stone-500">{{ t('group.uploadOwnerOnly') }}</p>
 
       <!-- Members -->
       <section class="card" aria-labelledby="members-title">

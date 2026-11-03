@@ -51,7 +51,7 @@ The MVP requires a network connection for private content and voting. Offline ph
 Use versioned database migrations. Treat this list as a domain model, not executable SQL:
 
 - User profiles, keyed to Supabase Auth users.
-- Groups and group memberships, with an owner/member role.
+- Groups and group memberships, with an owner/member role, and a per-group upload policy (every member or owner only).
 - Hashed invitation tokens and membership requests.
 - Clothing records with the group, uploader, private Storage object path, creation time, and retention deadline.
 - Votes with a checked vote type and a unique constraint on item plus voter.

@@ -49,7 +49,7 @@ watch([() => feed.isOwner.value, () => notifications.items.value], loadPending, 
           <RouterLink v-if="toReview > 0" :to="{ name: 'swipe', params: { groupId } }" class="btn-secondary">
             {{ t('swipe.open') }} <span class="rounded-full bg-brand-100 px-2 text-xs text-brand-800">{{ toReview }}</span>
           </RouterLink>
-          <RouterLink :to="{ name: 'upload', params: { groupId } }" class="btn-primary">{{ t('group.addPhoto') }}</RouterLink>
+          <RouterLink v-if="feed.canUpload.value" :to="{ name: 'upload', params: { groupId } }" class="btn-primary">{{ t('group.addPhoto') }}</RouterLink>
         </template>
       </PageTitle>
 
@@ -76,7 +76,9 @@ watch([() => feed.isOwner.value, () => notifications.items.value], loadPending, 
       </RouterLink>
       <p class="alert-info mb-4">{{ t('vote.advice') }}</p>
 
-      <p v-if="!feed.items.value.length" class="card text-sm text-stone-600">{{ t('group.emptyFeed') }}</p>
+      <p v-if="!feed.items.value.length" class="card text-sm text-stone-600">
+        {{ feed.canUpload.value ? t('group.emptyFeed') : t('group.emptyFeedOwnerOnly') }}
+      </p>
       <div v-else class="grid gap-4 sm:grid-cols-2">
         <ItemCard
           v-for="item in feed.items.value"

@@ -23,6 +23,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 
 const newName = ref('')
+const newMembersCanUpload = ref(true)
 const creating = ref(false)
 const createError = ref<string | null>(null)
 
@@ -59,9 +60,10 @@ async function createGroup() {
   creating.value = true
   createError.value = null
   try {
-    const { data, error: rpcError } = await supabase.rpc('create_group', { p_name: name })
+    const { data, error: rpcError } = await supabase.rpc('create_group', { p_name: name, p_members_can_upload: newMembersCanUpload.value })
     if (rpcError) throw rpcError
     newName.value = ''
+    newMembersCanUpload.value = true
     await router.push({ name: 'group', params: { groupId: data.id } })
   } catch (err) {
     createError.value = errorKey(err)
@@ -145,6 +147,19 @@ onMounted(load)
           <label for="group-name" class="label">{{ t('home.groupName') }}</label>
           <input id="group-name" v-model="newName" type="text" maxlength="80" required class="input" :placeholder="t('home.groupNamePlaceholder')" />
         </div>
+        <fieldset>
+          <legend class="label">{{ t('group.uploadPolicy') }}</legend>
+          <div class="flex flex-col gap-1 text-sm">
+            <label class="flex items-center gap-2">
+              <input v-model="newMembersCanUpload" type="radio" name="upload-policy" :value="true" />
+              {{ t('group.uploadPolicyEveryone') }}
+            </label>
+            <label class="flex items-center gap-2">
+              <input v-model="newMembersCanUpload" type="radio" name="upload-policy" :value="false" />
+              {{ t('group.uploadPolicyOwner') }}
+            </label>
+          </div>
+        </fieldset>
         <p v-if="createError" class="alert-error" role="alert">{{ t(createError) }}</p>
         <button type="submit" class="btn-primary self-start" :disabled="creating || !newName.trim()">
           {{ creating ? t('home.creating') : t('home.create') }}

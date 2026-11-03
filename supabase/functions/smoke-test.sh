@@ -106,6 +106,22 @@ check "rejected object is removed" "404" "$(object_exists "$EXIF_PATH")"
 check "member can sign a URL for the photo" "200" "$(as_user "$MEMBER_TOK" -o /dev/null -w '%{http_code}' -X POST "$API_URL/storage/v1/object/sign/photos/$CLEAN_PATH" -d '{"expiresIn":60}')"
 check "outsider cannot sign a URL" "400" "$(as_user "$OTHER_TOK" -o /dev/null -w '%{http_code}' -X POST "$API_URL/storage/v1/object/sign/photos/$CLEAN_PATH" -d '{"expiresIn":60}')"
 
+echo "== owner-only uploads"
+CLOSED_ID="$(rpc "$OWNER_TOK" create_group '{"p_name":"Closed group","p_members_can_upload":false}' | json "['id']")"
+check "create_group stores the upload policy" "False" "$(rest "$OWNER_TOK" "groups?select=members_can_upload&id=eq.$CLOSED_ID" | json "[0]['members_can_upload']")"
+admin -X POST "$API_URL/rest/v1/group_members" -d "{\"group_id\":\"$CLOSED_ID\",\"user_id\":\"$MEMBER_ID\"}" >/dev/null
+check "member may not upload to an owner-only group" "false" "$(rpc "$MEMBER_TOK" can_upload_to_group "{\"p_group_id\":\"$CLOSED_ID\"}")"
+check "member upload into an owner-only group is denied" "403" "$(upload "$MEMBER_TOK" "$CLOSED_ID/$MEMBER_ID/x.jpg" jpeg_clean)"
+mapfile -t R < <(fn "$MEMBER_TOK" register-photo "{\"group_id\":\"$CLOSED_ID\",\"path\":\"$CLOSED_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg\"}")
+check "register-photo refuses a member in an owner-only group" "403" "${R[0]}"
+check "refusal names the upload policy" "upload_not_allowed" "$(echo "${R[1]}" | json "['error']")"
+CLOSED_PATH="$CLOSED_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+check "owner uploads into an owner-only group" "200" "$(upload "$OWNER_TOK" "$CLOSED_PATH" jpeg_clean)"
+mapfile -t R < <(fn "$OWNER_TOK" register-photo "{\"group_id\":\"$CLOSED_ID\",\"path\":\"$CLOSED_PATH\"}")
+check "owner registers a photo in an owner-only group" "201" "${R[0]}"
+check "member cannot change the upload policy" "[]" "$(rest "$MEMBER_TOK" "groups?id=eq.$CLOSED_ID" -X PATCH -d '{"members_can_upload":true}')"
+check "owner changes the upload policy" "True" "$(rest "$OWNER_TOK" "groups?id=eq.$CLOSED_ID" -X PATCH -d '{"members_can_upload":true}' | json "[0]['members_can_upload']")"
+
 echo "== votes"
 check "member votes want" "want" "$(rpc "$MEMBER_TOK" cast_vote "{\"p_item_id\":\"$ITEM_ID\",\"p_vote\":\"want\"}" | json "['vote']")"
 check "member changes to keep" "keep" "$(rpc "$MEMBER_TOK" cast_vote "{\"p_item_id\":\"$ITEM_ID\",\"p_vote\":\"keep\"}" | json "['vote']")"
@@ -155,6 +171,9 @@ mapfile -t R < <(fn "$OWNER_TOK" delete-group "{\"group_id\":\"$GROUP_ID\",\"con
 check "delete-group needs the exact name" "400" "${R[0]}"
 mapfile -t R < <(fn "$OWNER_TOK" delete-group "{\"group_id\":\"$GROUP_ID\",\"confirm_name\":\"Smoke group\"}")
 check "owner deletes the group" "200" "${R[0]}"
+mapfile -t R < <(fn "$OWNER_TOK" delete-group "{\"group_id\":\"$CLOSED_ID\",\"confirm_name\":\"Closed group\"}")
+check "owner deletes the owner-only group" "200" "${R[0]}"
+check "its photo is removed with it" "404" "$(object_exists "$CLOSED_PATH")"
 mapfile -t R < <(fn "$OWNER_TOK" delete-account '{"confirm":"DELETE"}')
 check "owner deletes account afterwards" "200" "${R[0]}"
 

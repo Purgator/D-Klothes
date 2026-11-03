@@ -34,6 +34,9 @@ serve(async (req) => {
     .eq('user_id', user.id)
     .maybeSingle()
   if (!membership) fail(403, 'not_a_member')
+  // The group may restrict uploads to its owner (also enforced by Storage and a trigger).
+  const { data: canUpload } = await db.rpc('can_upload_to_group', { p_group_id: groupId })
+  if (canUpload !== true) fail(403, 'upload_not_allowed')
 
   const admin = adminClient()
   const { data: blob, error: dlError } = await admin.storage.from(PHOTOS_BUCKET).download(path)
@@ -57,6 +60,7 @@ serve(async (req) => {
   if (error) {
     // Photo limit of the uploader's tier (database trigger): remove the object and say so.
     if (error.code === 'P0013') await reject('limit_photos')
+    if (error.code === 'P0014') await reject('upload_not_allowed')
     // Duplicate registration of the same object is idempotent.
     if (error.code === '23505') {
       const { data: existing } = await admin.from('clothing_items').select().eq('storage_path', path).single()

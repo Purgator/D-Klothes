@@ -117,6 +117,7 @@ export type Database = {
         Row: {
           created_at: string;
           id: string;
+          members_can_upload: boolean;
           name: string;
           owner_id: string;
         };
@@ -124,12 +125,14 @@ export type Database = {
         Insert: {
           created_at?: string;
           id?: string;
+          members_can_upload?: boolean;
           name: string;
           owner_id: string;
         };
         Update: {
           created_at?: string;
           id?: string;
+          members_can_upload?: boolean;
           name?: string;
           owner_id?: string;
         };
@@ -421,6 +424,10 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: Database["public"]["Enums"]["account_tier"];
       };
+      can_upload_to_group: {
+        Args: { p_group_id: string };
+        Returns: boolean;
+      };
       cast_vote: {
         Args: { p_item_id: string; p_vote: Database["public"]["Enums"]["vote_type"] };
         Returns: {
@@ -438,10 +445,11 @@ export type Database = {
         };
       };
       create_group: {
-        Args: { p_name: string };
+        Args: { p_members_can_upload?: boolean; p_name: string };
         Returns: {
           created_at: string;
           id: string;
+          members_can_upload: boolean;
           name: string;
           owner_id: string;
         };

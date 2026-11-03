@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { PHOTOS_BUCKET, invokeFunction, supabase } from '@/lib/supabase'
@@ -29,6 +29,13 @@ const STEPS: Step[] = ['decoding', 'compressing', 'uploading', 'registering']
 const step = ref<Step | null>(null)
 const stepIndex = computed(() => (step.value ? STEPS.indexOf(step.value) : -1))
 const progressPercent = computed(() => Math.round(((stepIndex.value + 1) / (STEPS.length + 1)) * 100))
+
+// The server refuses uploads the group does not allow; this check only explains it earlier.
+const allowed = ref<boolean | null>(null)
+onMounted(async () => {
+  const { data } = await supabase.rpc('can_upload_to_group', { p_group_id: groupId.value })
+  allowed.value = data === true
+})
 
 const retentionDate = computed(() => {
   const date = new Date()
@@ -107,7 +114,8 @@ onUnmounted(revokePreview)
 <template>
   <section>
     <PageTitle :title="t('upload.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('group.feed')" />
-    <form class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
+    <p v-if="allowed === false" class="alert-warning" role="alert">{{ t('errors.upload_not_allowed') }}</p>
+    <form v-else class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
       <div>
         <label for="photo" class="label">{{ t('upload.choose') }}</label>
         <input

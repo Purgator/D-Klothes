@@ -25,6 +25,8 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
   const live = ref(false)
 
   const isOwner = computed(() => !!group.value && group.value.owner_id === userId.value)
+  // Mirrors can_upload_to_group(): the server is the authority, this only drives the UI.
+  const canUpload = computed(() => !!group.value && (group.value.members_can_upload || isOwner.value))
   const memberNames = computed(() => new Map(members.value.map((m) => [m.user_id, m.profile?.display_name ?? '?'])))
 
   async function load() {
@@ -136,5 +138,5 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     unsubscribe()
   })
 
-  return { group, members, items, counts, myVotes, loading, error, notMember, live, isOwner, memberNames, load, countsFor, vote }
+  return { group, members, items, counts, myVotes, loading, error, notMember, live, isOwner, canUpload, memberNames, load, countsFor, vote }
 }

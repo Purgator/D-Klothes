@@ -17,8 +17,8 @@ and switchable at any time.
 
 - **Sign in by email link.** No password. You pick a display name once.
 - **Groups you control.** Create a group, invite friends with single-use links that expire
-  after 24 hours, and approve or decline each request yourself. Transfer ownership or delete
-  the group whenever you want.
+  after 24 hours, and approve or decline each request yourself. Choose whether every member
+  or only you can add photos. Transfer ownership or delete the group whenever you want.
 - **Photos, not metadata.** Each photo is downscaled and recompressed in your browser (2 MiB
   max) and its EXIF data (location, device, date) is removed before upload. The server checks
   again and refuses anything that still carries metadata.
@@ -141,7 +141,7 @@ npm run db:types     # regenerate src/types/database.gen.ts after a migration
 
 | Function | What it does |
 | --- | --- |
-| `register-photo` | After the client uploads to `photos/<group>/<user>/<uuid>.jpg`, verifies membership, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads, and uploads beyond the account's photo limit, are deleted from Storage. |
+| `register-photo` | After the client uploads to `photos/<group>/<user>/<uuid>.jpg`, verifies membership, the group's upload policy, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads, and uploads beyond the account's photo limit, are deleted from Storage. |
 | `delete-photo` | Uploader or group owner. Removes the Storage object, confirms it is gone, then deletes the record (votes cascade). |
 | `delete-group` | Owner only, confirmed by typing the group name. Removes every object under the group prefix, then the group row. |
 | `export-account` | ZIP archive with `account.json` (profile, memberships, requests, votes, item metadata) and the user's photo files. |
