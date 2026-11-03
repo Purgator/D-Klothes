@@ -6,11 +6,14 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { errorKey } from '@/lib/errors'
 import { daysUntil } from '@/lib/retention'
+import { useToast } from '@/composables/useToast'
+import ShareButton from '@/components/ShareButton.vue'
 import type { ClothingItem, Group, MyMembershipRequest } from '@/types/database'
 
 const { t, d } = useI18n()
 const router = useRouter()
 const auth = useAuth()
+const toast = useToast()
 
 interface GroupRow extends Group {
   memberCount: number
@@ -64,6 +67,7 @@ async function createGroup() {
     if (rpcError) throw rpcError
     newName.value = ''
     newMembersCanUpload.value = true
+    toast.show(t('toast.groupCreated'), { emoji: '🎈' })
     await router.push({ name: 'group', params: { groupId: data.id } })
   } catch (err) {
     createError.value = errorKey(err)
@@ -77,7 +81,10 @@ onMounted(load)
 
 <template>
   <section>
-    <h1 class="mb-4 text-2xl font-semibold">{{ t('home.title') }}</h1>
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <h1 class="text-2xl font-semibold">{{ t('home.title') }}</h1>
+      <ShareButton />
+    </div>
 
     <p v-if="error" class="alert-error mb-4" role="alert">
       {{ t(error) }} <button type="button" class="underline" @click="load">{{ t('app.retry') }}</button>

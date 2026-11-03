@@ -18,7 +18,44 @@
     "version": "Version {version}",
     "notFoundTitle": "Page not found",
     "notFoundBody": "This page does not exist or has moved.",
-    "goHome": "Back to home"
+    "goHome": "Back to home",
+    "share": "Share the app"
+  },
+  "toast": {
+    "voteSaved": "Advice saved",
+    "voteRemoved": "Advice removed",
+    "allReviewed": "Well done, you have reviewed everything!",
+    "photoPublished": "Photo published!",
+    "groupCreated": "Group created!",
+    "saved": "Saved",
+    "linkCopied": "Link copied!"
+  },
+  "welcome": {
+    "title": "Welcome to D-Klothes",
+    "lead": "A private app, between friends, to sort out your wardrobe: you photograph a piece of clothing, your friends tell you whether it suits you, whether it no longer does, or whether they want it.",
+    "cta": "Sign in or create an account",
+    "shareText": "Let’s sort out our wardrobes together with D-Klothes!",
+    "howTitle": "How it works",
+    "steps": {
+      "photo": { "emoji": "📸", "title": "Take a photo", "body": "Add a photo of a piece of clothing to your friends’ group. It is compressed and its metadata removed before upload." },
+      "friends": { "emoji": "👀", "title": "Your friends give advice", "body": "Everyone swipes through the photos: Keep, Let go or I want this. One advice per person, changeable." },
+      "decide": { "emoji": "✨", "title": "You decide", "body": "You see the totals and who wants your item. Nothing is thrown away or given automatically: you arrange everything yourself." }
+    },
+    "installTitle": "Install the app on your phone",
+    "installLead": "D-Klothes is a web app: no app store, it installs from the browser in three taps.",
+    "install": {
+      "ios": { "title": "iPhone / iPad (Safari)", "step1": "Open this site in Safari.", "step2": "Tap the Share button (the square with an arrow).", "step3": "Choose “Add to Home Screen”, then “Add”." },
+      "android": { "title": "Android (Chrome)", "step1": "Open this site in Chrome.", "step2": "Tap the ⋮ menu in the top right corner.", "step3": "Choose “Install app” or “Add to Home screen”." },
+      "desktop": { "title": "Computer (Chrome, Edge)", "step1": "Open this site in Chrome or Edge.", "step2": "Click the install icon at the right of the address bar.", "step3": "Confirm: the app opens in its own window." }
+    },
+    "installHint": "You can also use it without installing, right in the browser.",
+    "privacyTitle": "Your photos stay between you",
+    "privacy1": "Only the members of your group see your photos, by invitation only.",
+    "privacy2": "Nobody sees who said Keep or Let go. Only you see who wants your item.",
+    "privacy3": "No ads, no tracking, no data resale.",
+    "privacy4": "Photos are deleted after two years, or sooner if you decide. You can export or delete your account at any time.",
+    "inviteOnly": "Access is by invitation: ask the friend who told you about it for a link.",
+    "source": "Free software, source code on GitHub"
   },
   "language": {
     "label": "Language",
@@ -208,6 +245,9 @@
     "displayName": "Display name",
     "displayNameFixed": "The display name is chosen at sign-up and cannot be changed.",
     "language": "Interface language",
+    "about": "About D-Klothes",
+    "aboutBody": "The welcome page explains the app and how to install it. Share it with your friends.",
+    "openWelcome": "Open the welcome page",
     "data": "Your data",
     "exportTitle": "Export my data",
     "exportBody": "Download a ZIP archive with your profile, memberships, votes and photos.",
@@ -287,6 +327,7 @@
     "limit_members": "This group has reached the member limit of the owner's plan.",
     "limit_photos": "This account has reached its number of photos. Delete an older photo or ask the administrator for a premium account.",
     "upload_not_allowed": "Only the owner can add photos to this group.",
+    "vote_cooldown": "You just gave your advice: wait a few seconds before changing it.",
     "image_processing": "Your browser could not process this image.",
     "request_failed": "The request failed. Please try again.",
     "internal_error": "Server error. Try again later.",

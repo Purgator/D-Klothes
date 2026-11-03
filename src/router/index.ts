@@ -16,6 +16,7 @@ export const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { auth: true } },
     { path: '/signin', name: 'signin', component: () => import('@/views/SignInView.vue'), meta: { guest: true } },
+    { path: '/welcome', name: 'welcome', component: () => import('@/views/WelcomeView.vue') },
     { path: '/auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallbackView.vue') },
     { path: '/onboarding', name: 'onboarding', component: () => import('@/views/OnboardingView.vue') },
     { path: '/invite/:token', name: 'invite', component: () => import('@/views/InviteView.vue') },

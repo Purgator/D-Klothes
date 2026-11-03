@@ -18,7 +18,44 @@
     "version": "Version {version}",
     "notFoundTitle": "Page introuvable",
     "notFoundBody": "Cette page n’existe pas ou a été déplacée.",
-    "goHome": "Retour à l’accueil"
+    "goHome": "Retour à l’accueil",
+    "share": "Partager l’app"
+  },
+  "toast": {
+    "voteSaved": "Avis enregistré",
+    "voteRemoved": "Avis retiré",
+    "allReviewed": "Bravo, vous avez tout passé en revue !",
+    "photoPublished": "Photo publiée !",
+    "groupCreated": "Groupe créé !",
+    "saved": "Enregistré",
+    "linkCopied": "Lien copié !"
+  },
+  "welcome": {
+    "title": "Bienvenue sur D-Klothes",
+    "lead": "Une appli privée, entre amis, pour trier sa garde-robe : vous photographiez un vêtement, vos amis vous disent s’il vous va, s’il ne vous va plus, ou s’ils le veulent.",
+    "cta": "Se connecter ou créer un compte",
+    "shareText": "Trions nos garde-robes ensemble avec D-Klothes !",
+    "howTitle": "Comment ça marche",
+    "steps": {
+      "photo": { "emoji": "📸", "title": "Photographiez", "body": "Ajoutez une photo d’un vêtement dans votre groupe d’amis. Elle est compressée et ses métadonnées sont retirées avant l’envoi." },
+      "friends": { "emoji": "👀", "title": "Vos amis donnent leur avis", "body": "Chacun·e glisse les photos : « Ça te va », « Ça ne te va pas » ou « Je le veux ». Un seul avis par personne, modifiable." },
+      "decide": { "emoji": "✨", "title": "Vous décidez", "body": "Vous voyez les totaux et qui veut votre vêtement. Rien n’est jeté ni donné automatiquement : vous organisez tout vous-même." }
+    },
+    "installTitle": "Installer l’app sur votre téléphone",
+    "installLead": "D-Klothes est une appli web : pas de magasin d’applications, elle s’installe depuis le navigateur en trois gestes.",
+    "install": {
+      "ios": { "title": "iPhone / iPad (Safari)", "step1": "Ouvrez ce site dans Safari.", "step2": "Touchez le bouton Partager (le carré avec une flèche).", "step3": "Choisissez « Sur l’écran d’accueil », puis « Ajouter »." },
+      "android": { "title": "Android (Chrome)", "step1": "Ouvrez ce site dans Chrome.", "step2": "Touchez le menu ⋮ en haut à droite.", "step3": "Choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil »." },
+      "desktop": { "title": "Ordinateur (Chrome, Edge)", "step1": "Ouvrez ce site dans Chrome ou Edge.", "step2": "Cliquez sur l’icône d’installation à droite de la barre d’adresse.", "step3": "Confirmez : l’app s’ouvre dans sa propre fenêtre." }
+    },
+    "installHint": "Vous pouvez aussi l’utiliser sans l’installer, simplement dans le navigateur.",
+    "privacyTitle": "Vos photos restent entre vous",
+    "privacy1": "Seuls les membres de votre groupe voient vos photos, sur invitation uniquement.",
+    "privacy2": "Personne ne voit qui a dit « Ça te va » ou « Ça ne te va pas ». Seul·e vous voyez qui veut votre vêtement.",
+    "privacy3": "Pas de publicité, pas de suivi, pas de revente de données.",
+    "privacy4": "Les photos sont supprimées au bout de deux ans, ou plus tôt si vous le décidez. Vous pouvez exporter ou supprimer votre compte à tout moment.",
+    "inviteOnly": "L’accès se fait sur invitation : demandez un lien à l’ami·e qui vous en a parlé.",
+    "source": "Logiciel libre, code source sur GitHub"
   },
   "language": {
     "label": "Langue",
@@ -208,6 +245,9 @@
     "displayName": "Nom affiché",
     "displayNameFixed": "Le nom affiché est choisi à l’inscription et ne se modifie pas.",
     "language": "Langue de l’interface",
+    "about": "À propos de D-Klothes",
+    "aboutBody": "La page d’accueil explique l’app et comment l’installer. Partagez-la à vos amis.",
+    "openWelcome": "Voir la page d’accueil",
     "data": "Vos données",
     "exportTitle": "Exporter mes données",
     "exportBody": "Téléchargez une archive ZIP contenant votre profil, vos adhésions, vos votes et vos photos.",
@@ -287,6 +327,7 @@
     "limit_members": "Ce groupe a atteint la limite de membres de la formule du propriétaire.",
     "limit_photos": "Ce compte a atteint son nombre de photos. Supprimez une photo plus ancienne ou demandez un compte premium à l’administrateur.",
     "upload_not_allowed": "Seul le propriétaire peut ajouter des photos dans ce groupe.",
+    "vote_cooldown": "Vous venez de donner votre avis : attendez quelques secondes avant de le changer.",
     "image_processing": "Votre navigateur n’a pas pu traiter cette image.",
     "request_failed": "La requête a échoué. Réessayez.",
     "internal_error": "Erreur du serveur. Réessayez plus tard.",

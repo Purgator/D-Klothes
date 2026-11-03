@@ -7,6 +7,7 @@ import type { Entitlements } from '@/types/database'
 import { errorKey } from '@/lib/errors'
 import { useAuth } from '@/composables/useAuth'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import ShareButton from '@/components/ShareButton.vue'
 import PageTitle from '@/components/PageTitle.vue'
 
 const { t } = useI18n()
@@ -96,6 +97,17 @@ async function signOut() {
     <section class="card flex items-center justify-between gap-3">
       <h2 class="text-lg font-medium">{{ t('account.language') }}</h2>
       <LanguageSwitcher />
+    </section>
+
+    <section class="card flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-medium">{{ t('account.about') }}</h2>
+        <p class="text-sm text-stone-600">{{ t('account.aboutBody') }}</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <RouterLink :to="{ name: 'welcome' }" class="btn-secondary">{{ t('account.openWelcome') }}</RouterLink>
+        <ShareButton />
+      </div>
     </section>
 
     <section v-if="entitlements" class="card flex flex-col gap-2" aria-labelledby="plan-title">

@@ -11,7 +11,35 @@ yourself.
 👉 **Open the app: [purgator.github.io/D-Klothes](https://purgator.github.io/D-Klothes/)**
 
 Installable on iPhone and Android as a web app. French and English, chosen from your device
-and switchable at any time.
+and switchable at any time. The welcome page at
+[purgator.github.io/D-Klothes/welcome](https://purgator.github.io/D-Klothes/welcome) explains
+the app in both languages and is the link to share with friends.
+
+## Installing on your phone
+
+D-Klothes is not in an app store: it installs straight from the browser, in three taps, and then
+opens like any other app. You need an invitation link from a friend to join their group.
+
+**iPhone or iPad (Safari)**
+
+1. Open <https://purgator.github.io/D-Klothes/> in Safari (other browsers cannot install it on iOS).
+2. Tap the **Share** button at the bottom (the square with an arrow pointing up).
+3. Scroll down, tap **Add to Home Screen**, then **Add**.
+
+**Android (Chrome)**
+
+1. Open <https://purgator.github.io/D-Klothes/> in Chrome.
+2. Tap the **⋮** menu in the top-right corner.
+3. Tap **Install app** (or **Add to Home screen**), then confirm.
+
+**Computer (Chrome or Edge)**
+
+1. Open <https://purgator.github.io/D-Klothes/>.
+2. Click the small **install** icon at the right end of the address bar.
+3. Confirm: the app opens in its own window.
+
+Nothing to install if you prefer: the site works the same in the browser. Sign in with your email
+address; you receive a link to click, there is no password.
 
 ## Features
 
