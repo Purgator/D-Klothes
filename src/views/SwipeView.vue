@@ -155,12 +155,14 @@ const labelStyles: Record<VoteType, string> = {
 
         <div class="relative aspect-[4/5] select-none" style="touch-action: none">
           <!-- Next card, peeking from behind -->
-          <div v-if="next" class="absolute inset-0 scale-95 translate-y-3 opacity-70" aria-hidden="true">
+          <div v-if="next" :key="`next-${next.id}`" class="absolute inset-0 scale-95 translate-y-3 opacity-70" aria-hidden="true">
             <PhotoImage :path="next.storage_path" alt="" sizes-class="h-full" />
           </div>
-          <!-- Current card -->
+          <!-- Current card. Keyed by item so a decided card is never reused for the next one:
+               a reused element would animate from its fly-out position back to the centre. -->
           <div
-            class="absolute inset-0 cursor-grab touch-none rounded-xl bg-white shadow-lg active:cursor-grabbing"
+            :key="current.id"
+            class="swipe-card absolute inset-0 cursor-grab touch-none rounded-xl bg-white shadow-lg active:cursor-grabbing"
             :style="cardStyle"
             role="img"
             :aria-label="t('swipe.cardLabel', { index: decided.size + 1, total, title: current.title || t('home.untitled') })"
@@ -201,5 +203,27 @@ const labelStyles: Record<VoteType, string> = {
         <p class="text-center text-xs text-stone-500">{{ t('vote.advice') }}</p>
       </div>
     </template>
+
+<style scoped>
+/* A fresh card settles in from the "peeking" state instead of popping. */
+@keyframes swipe-card-in {
+  from {
+    transform: translateY(0.75rem) scale(0.95);
+    opacity: 0.7;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.swipe-card {
+  animation: swipe-card-in 220ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .swipe-card {
+    animation: none;
+  }
+}
+</style>
   </section>
 </template>
