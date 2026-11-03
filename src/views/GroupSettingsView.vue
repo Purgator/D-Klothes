@@ -8,6 +8,7 @@ import { buildInviteUrl, invitationState } from '@/lib/invitations'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupFeed } from '@/composables/useGroupFeed'
 import { useNotifications } from '@/composables/useNotifications'
+import { useToast } from '@/composables/useToast'
 import PageTitle from '@/components/PageTitle.vue'
 import type { Invitation, MembershipRequest } from '@/types/database'
 
@@ -15,6 +16,7 @@ const { t, d } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
+const toast = useToast()
 
 const groupId = computed(() => String(route.params.groupId))
 const userId = computed(() => auth.user.value?.id ?? null)
@@ -47,6 +49,7 @@ const rename = () =>
     const { error: e } = await supabase.from('groups').update({ name: name.value.trim() }).eq('id', groupId.value)
     if (e) throw e
     await feed.load()
+    toast.show(t('toast.saved'), { emoji: '✅' })
   })
 
 // --- Upload policy (owner) -----------------------------------------------------
@@ -62,6 +65,7 @@ const saveUploadPolicy = (value: boolean) =>
     const { error: e } = await supabase.from('groups').update({ members_can_upload: value }).eq('id', groupId.value)
     if (e) throw e
     await feed.load()
+    toast.show(t('toast.saved'), { emoji: '✅' })
   })
 
 // --- Invitations -------------------------------------------------------------
@@ -88,6 +92,7 @@ async function copyInvite() {
   try {
     await navigator.clipboard.writeText(newInvite.value.url)
     copied.value = true
+    toast.show(t('toast.linkCopied'), { emoji: '🔗' })
   } catch {
     copied.value = false
   }

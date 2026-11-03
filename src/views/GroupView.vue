@@ -9,6 +9,8 @@ import { useNotifications } from '@/composables/useNotifications'
 import PageTitle from '@/components/PageTitle.vue'
 import PhotoImage from '@/components/PhotoImage.vue'
 import { errorKey } from '@/lib/errors'
+import { VOTE_EMOJI } from '@/lib/votes'
+import { haptic, useToast } from '@/composables/useToast'
 import type { ClothingItem, VoteType } from '@/types/database'
 
 const { t } = useI18n()
@@ -32,6 +34,7 @@ const next = computed(() => queue.value[1] ?? null)
 const total = computed(() => queue.value.length + decided.value.size)
 const lastVoted = ref<ClothingItem | null>(null)
 const error = ref<string | null>(null)
+const toast = useToast()
 
 // Owners: how many membership requests are waiting (refreshed with the feed and via notifications).
 const pendingRequests = ref(0)
@@ -107,6 +110,7 @@ async function decide(vote: VoteType) {
   if (!item || flyOut.value) return
   error.value = null
   flyOut.value = vote
+  haptic(vote === 'want' ? [10, 40, 20] : 12)
   await new Promise((r) => setTimeout(r, 300))
   decided.value = new Set([...decided.value, item.id])
   lastVoted.value = item
@@ -115,6 +119,10 @@ async function decide(vote: VoteType) {
   dy.value = 0
   try {
     await feed.vote(item.id, vote)
+    if (queue.value.length === 0) {
+      haptic([20, 60, 20, 60, 40])
+      toast.show(t('toast.allReviewed'), { emoji: '🎉', durationMs: 4000 })
+    }
   } catch (err) {
     error.value = errorKey(err)
     decided.value = new Set([...decided.value].filter((id) => id !== item.id))
@@ -128,6 +136,7 @@ async function undo() {
   try {
     await feed.vote(item.id, null)
     decided.value = new Set([...decided.value].filter((id) => id !== item.id))
+    toast.show(t('toast.voteRemoved'), { emoji: '↩️', tone: 'info' })
   } catch (err) {
     error.value = errorKey(err)
   }
@@ -185,6 +194,7 @@ const labelStyles: Record<VoteType, string> = {
 
       <!-- Everything reviewed: point to the collection -->
       <div v-else-if="!current" class="card flex flex-col items-start gap-3">
+        <p class="text-3xl" aria-hidden="true">🎉</p>
         <p>{{ t('swipe.done') }}</p>
         <div class="flex flex-wrap gap-2">
           <RouterLink :to="{ name: 'group-photos', params: { groupId } }" class="btn-primary">{{ t('swipe.seeAll') }}</RouterLink>
@@ -228,20 +238,20 @@ const labelStyles: Record<VoteType, string> = {
               :style="{ opacity: String(intensity) }"
               aria-hidden="true"
             >
-              {{ t(`vote.${direction}`) }}
+              {{ VOTE_EMOJI[direction] }} {{ t(`vote.${direction}`) }}
             </span>
           </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2" role="group" :aria-label="t('vote.prompt')">
           <button type="button" class="btn border border-amber-300 bg-white text-amber-800 hover:bg-amber-50" @click="decide('let_go')">
-            ← {{ t('vote.let_go') }}
+            <span aria-hidden="true">{{ VOTE_EMOJI.let_go }}</span> {{ t('vote.let_go') }}
           </button>
           <button type="button" class="btn border border-rose-300 bg-white text-rose-800 hover:bg-rose-50" @click="decide('want')">
-            ↑ {{ t('vote.want') }}
+            <span aria-hidden="true">{{ VOTE_EMOJI.want }}</span> {{ t('vote.want') }}
           </button>
           <button type="button" class="btn border border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50" @click="decide('keep')">
-            {{ t('vote.keep') }} →
+            <span aria-hidden="true">{{ VOTE_EMOJI.keep }}</span> {{ t('vote.keep') }}
           </button>
         </div>
         <button v-if="lastVoted" type="button" class="btn-secondary self-center" @click="undo">{{ t('swipe.undo') }}</button>

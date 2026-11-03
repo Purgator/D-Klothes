@@ -7,6 +7,7 @@ import { isAcceptedInput, preparePhoto, type PreparedPhoto } from '@/lib/image'
 import { errorKey } from '@/lib/errors'
 import { retryOnNetworkError } from '@/lib/retry'
 import { useAuth } from '@/composables/useAuth'
+import { haptic, useToast } from '@/composables/useToast'
 import PageTitle from '@/components/PageTitle.vue'
 import type { ClothingItem } from '@/types/database'
 
@@ -14,6 +15,7 @@ const { t, d, n } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
+const toast = useToast()
 
 const groupId = computed(() => String(route.params.groupId))
 const title = ref('')
@@ -99,6 +101,8 @@ async function submit() {
       await supabase.storage.from(PHOTOS_BUCKET).remove([path])
       throw err
     }
+    haptic([10, 30, 10])
+    toast.show(t('toast.photoPublished'), { emoji: '📸' })
     // The group page hides the uploader's own photos, so land on the collection instead.
     await router.push({ name: 'group-photos', params: { groupId: groupId.value } })
   } catch (err) {

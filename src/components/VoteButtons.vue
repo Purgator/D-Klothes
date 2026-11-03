@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { VOTE_TYPES } from '@/lib/votes'
+import { VOTE_TYPES, VOTE_EMOJI } from '@/lib/votes'
 import { errorKey } from '@/lib/errors'
+import { haptic, useToast } from '@/composables/useToast'
 import type { VoteType } from '@/types/database'
 
 const props = defineProps<{
@@ -11,6 +12,7 @@ const props = defineProps<{
   vote: (itemId: string, next: VoteType | null) => Promise<void>
 }>()
 const { t } = useI18n()
+const toast = useToast()
 const busy = ref(false)
 const error = ref<string | null>(null)
 
@@ -19,7 +21,10 @@ async function choose(next: VoteType) {
   busy.value = true
   error.value = null
   try {
-    await props.vote(props.itemId, props.current === next ? null : next)
+    const removing = props.current === next
+    await props.vote(props.itemId, removing ? null : next)
+    haptic()
+    toast.show(removing ? t('toast.voteRemoved') : t('toast.voteSaved'), { emoji: removing ? '↩️' : VOTE_EMOJI[next] })
   } catch (err) {
     error.value = errorKey(err)
   } finally {
@@ -47,7 +52,7 @@ const styles: Record<VoteType, string> = {
         :disabled="busy"
         @click="choose(type)"
       >
-        {{ t(`vote.${type}`) }}
+        <span aria-hidden="true">{{ VOTE_EMOJI[type] }}</span> {{ t(`vote.${type}`) }}
       </button>
     </div>
     <p v-if="current" class="mt-2 text-xs text-stone-600">

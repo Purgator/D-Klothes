@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppHeader from '@/components/AppHeader.vue'
+import ToastHost from '@/components/ToastHost.vue'
 
 const { t } = useI18n()
 const online = ref(typeof navigator === 'undefined' ? true : navigator.onLine)
@@ -25,4 +26,5 @@ onUnmounted(() => {
   <main id="main" class="mx-auto w-full max-w-3xl px-4 pb-16 pt-4">
     <RouterView />
   </main>
+  <ToastHost />
 </template>
