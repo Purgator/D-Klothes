@@ -70,8 +70,8 @@ export default defineConfig(({ mode }) => {
           start_url: base,
           scope: base,
           display: 'standalone',
-          background_color: '#fafaf9',
-          theme_color: '#0f766e',
+          background_color: '#f5f5f4',
+          theme_color: '#148a78',
           icons: [
             { src: `${base}icons/icon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
             { src: `${base}icons/icon-maskable.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
