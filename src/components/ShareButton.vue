@@ -3,8 +3,9 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { shareLink, welcomeUrl } from '@/lib/share'
 import { useToast } from '@/composables/useToast'
+import AppIcon from '@/components/AppIcon.vue'
 
-defineProps<{ primary?: boolean }>()
+defineProps<{ primary?: boolean; compact?: boolean; light?: boolean }>()
 const { t } = useI18n()
 const toast = useToast()
 const url = ref(welcomeUrl())
@@ -19,8 +20,12 @@ async function share() {
 
 <template>
   <div class="flex flex-col gap-2">
-    <button type="button" :class="primary ? 'btn-primary' : 'btn-secondary'" @click="share">
-      <span aria-hidden="true">📣</span> {{ t('app.share') }}
+    <button
+      type="button"
+      :class="['w-full', primary ? 'btn-primary' : light ? 'btn bg-white/15 text-white ring-1 ring-white/40 hover:bg-white/25' : 'btn-secondary', compact ? 'btn-sm' : '']"
+      @click="share"
+    >
+      <AppIcon name="share" :size="compact ? 16 : 20" /> {{ t('app.share') }}
     </button>
     <input
       v-if="showUrl"

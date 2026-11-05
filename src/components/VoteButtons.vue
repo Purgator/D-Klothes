@@ -33,31 +33,30 @@ async function choose(next: VoteType) {
 }
 
 const styles: Record<VoteType, string> = {
-  keep: 'border-emerald-300 text-emerald-800 aria-pressed:bg-emerald-600 aria-pressed:text-white aria-pressed:border-emerald-600',
-  let_go: 'border-amber-300 text-amber-800 aria-pressed:bg-amber-600 aria-pressed:text-white aria-pressed:border-amber-600',
-  want: 'border-rose-300 text-rose-800 aria-pressed:bg-rose-600 aria-pressed:text-white aria-pressed:border-rose-600',
+  keep: 'aria-pressed:border-keep-500 aria-pressed:bg-keep-500 aria-pressed:text-white',
+  let_go: 'aria-pressed:border-letgo-500 aria-pressed:bg-letgo-500 aria-pressed:text-white',
+  want: 'aria-pressed:border-want-500 aria-pressed:bg-want-500 aria-pressed:text-white',
 }
 </script>
 
 <template>
   <div>
-    <div class="flex flex-wrap gap-2" role="group" :aria-label="t('vote.prompt')">
+    <div class="grid grid-cols-3 gap-2" role="group" :aria-label="t('vote.prompt')">
       <button
         v-for="type in VOTE_TYPES"
         :key="type"
         type="button"
-        class="btn flex-1 border bg-white hover:bg-stone-50"
+        class="flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-stone-200 bg-white px-1 py-2 text-xs font-semibold text-stone-700 transition active:scale-95 disabled:opacity-50"
         :class="styles[type]"
         :aria-pressed="current === type"
         :disabled="busy"
         @click="choose(type)"
       >
-        <span aria-hidden="true">{{ VOTE_EMOJI[type] }}</span> {{ t(`vote.${type}`) }}
+        <span class="text-2xl" aria-hidden="true">{{ VOTE_EMOJI[type] }}</span>
+        <span class="leading-tight">{{ t(`vote.${type}`) }}</span>
       </button>
     </div>
-    <p v-if="current" class="mt-2 text-xs text-stone-600">
-      {{ t('vote.yourVote', { vote: t(`vote.${current}`) }) }}
-    </p>
+    <p v-if="current" class="mt-2 text-center text-xs text-stone-500">{{ t('vote.yourVote', { vote: t(`vote.${current}`) }) }} · {{ t('vote.tapToRemove') }}</p>
     <p v-if="error" class="alert-error mt-2" role="alert">{{ t(error) }}</p>
   </div>
 </template>

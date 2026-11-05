@@ -34,6 +34,7 @@
     "title": "Welcome to D-Klothes",
     "lead": "A private app, between friends, to sort out your wardrobe: you photograph a piece of clothing, your friends tell you whether it suits you, whether it no longer does, or whether they want it.",
     "cta": "Sign in or create an account",
+    "openApp": "Open the app",
     "shareText": "Let’s sort out our wardrobes together with D-Klothes!",
     "howTitle": "How it works",
     "steps": {
@@ -63,8 +64,10 @@
     "en": "English"
   },
   "nav": {
-    "home": "My groups",
-    "account": "My account",
+    "review": "Review",
+    "groups": "Groups",
+    "notifications": "Alerts",
+    "account": "Me",
     "signOut": "Sign out",
     "signIn": "Sign in"
   },
@@ -76,6 +79,8 @@
     "sendLink": "Send me a link",
     "sending": "Sending…",
     "sent": "Link sent! Open the email we sent to {email} and click the link to sign in.",
+    "sentTitle": "Check your inbox",
+    "anotherEmail": "Use another address",
     "sentHint": "The link expires quickly and works only once. Check your spam folder.",
     "invalidEmail": "Enter a valid email address.",
     "callbackTitle": "Signing you in…",
@@ -93,6 +98,8 @@
   },
   "home": {
     "title": "My groups",
+    "welcomeTitle": "Start with a group",
+    "createHint": "You will then get invitation links to share with your friends. Only approved members see the photos.",
     "empty": "You are not a member of any group yet. Create one or use an invitation link from a friend.",
     "createGroup": "Create a group",
     "groupName": "Group name",
@@ -112,6 +119,8 @@
   "group": {
     "photos": "All photos",
     "toReview": "{count} to review | {count} to review | {count} to review",
+    "photoCount": "{count} photos | {count} photo | {count} photos",
+    "reviewNow": "Give my advice ({count}) | Give my advice ({count}) | Give my advice ({count})",
     "settings": "Settings",
     "addPhoto": "Add a photo",
     "emptyFeed": "No photos yet. Add the first one!",
@@ -136,6 +145,7 @@
     "let_go": "Let go",
     "want": "I want this",
     "yourVote": "Your vote: {vote}",
+    "tapToRemove": "tap again to remove it",
     "remove": "Remove my vote",
     "ownItem": "This is your photo: you do not vote on it.",
     "counts": "Keep {keep} · Let go {letGo} · I want this {want}",
@@ -150,6 +160,7 @@
   "upload": {
     "title": "Add a photo",
     "choose": "Choose a photo",
+    "chooseHint": "Tap to pick a photo or take one. JPEG, PNG, WebP or HEIC.",
     "changePhoto": "Change photo",
     "itemTitle": "Title (optional)",
     "itemTitlePlaceholder": "e.g. Blue denim jacket",
@@ -174,6 +185,7 @@
     "deleteBody": "The photo, its votes and its record will be deleted permanently.",
     "deleting": "Deleting…",
     "editTitle": "Edit title",
+    "interested": "Who wants it",
     "photoAlt": "Clothing photo: {title}",
     "photoAltUntitled": "Untitled clothing photo",
     "added": "Added on {date}"
@@ -198,6 +210,8 @@
     "transferConfirm": "Transfer ownership to {name}? You will become a regular member.",
     "transferButton": "Transfer",
     "invitations": "Invitation links",
+    "inviteShareText": "Join my group “{group}” on D-Klothes!",
+    "options": "Options",
     "invitationsHelp": "Each link works once and expires after 24 hours. The full link is shown only once.",
     "createInvitation": "Create an invitation link",
     "newInviteTitle": "New invitation link",
@@ -249,6 +263,7 @@
     "email": "Email",
     "displayName": "Display name",
     "displayNameFixed": "The display name is chosen at sign-up and cannot be changed.",
+    "preferences": "Preferences",
     "language": "Interface language",
     "about": "About D-Klothes",
     "aboutBody": "The welcome page explains the app and how to install it. Share it with your friends.",
@@ -297,6 +312,7 @@
   "notifications": {
     "title": "Notifications",
     "bell": "Notifications, no unread | Notifications, {count} unread | Notifications, {count} unread",
+    "emptyTitle": "All quiet",
     "empty": "Nothing yet. You will be told here when someone asks to join your group, when your request is answered, when a friend adds a photo, and when someone wants one of yours.",
     "unread": "{count} unread | {count} unread | {count} unread",
     "history": "Earlier",
@@ -317,9 +333,12 @@
     }
   },
   "swipe": {
-    "intro": "Drag right to Keep, left to Let go, up for I want this. You can also use the buttons or the arrow keys.",
+    "hint": "Swipe right to keep, left to let go, up for I want this.",
+    "switchGroup": "Choose a group",
+    "emptyTitle": "Nothing to review yet",
+    "doneTitle": "All caught up!",
     "remaining": "{count} photo left to review | {count} photo left to review | {count} photos left to review",
-    "done": "All caught up! You have given your advice on every photo in this group.",
+    "done": "You have given your advice on every photo in this group.",
     "seeAll": "See all photos",
     "undo": "Undo last vote",
     "cardLabel": "Photo {index} of {total}: {title}"

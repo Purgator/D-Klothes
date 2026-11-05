@@ -7,54 +7,62 @@ declare module 'vue-router' {
     auth?: boolean
     /** Only for visitors; signed-in users are sent home. */
     guest?: boolean
+    /**
+     * How the screen sits in the app frame:
+     * - `tabs`: a root screen with the bottom tab bar;
+     * - `stack`: a detail screen pushed on top of a tab (back arrow, no tab bar);
+     * - `bare`: outside the signed-in app (welcome, sign-in).
+     */
+    layout?: 'tabs' | 'stack' | 'bare'
   }
 }
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  scrollBehavior: () => ({ top: 0 }),
   routes: [
-    { path: '/', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { auth: true } },
-    { path: '/signin', name: 'signin', component: () => import('@/views/SignInView.vue'), meta: { guest: true } },
-    { path: '/welcome', name: 'welcome', component: () => import('@/views/WelcomeView.vue') },
-    { path: '/auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallbackView.vue') },
-    { path: '/onboarding', name: 'onboarding', component: () => import('@/views/OnboardingView.vue') },
-    { path: '/invite/:token', name: 'invite', component: () => import('@/views/InviteView.vue') },
-    { path: '/groups/:groupId', name: 'group', component: () => import('@/views/GroupView.vue'), meta: { auth: true } },
+    { path: '/', name: 'home', component: () => import('@/views/HomeView.vue'), meta: { auth: true, layout: 'tabs' } },
+    { path: '/groups', name: 'groups', component: () => import('@/views/GroupsView.vue'), meta: { auth: true, layout: 'tabs' } },
+    { path: '/groups/new', name: 'group-new', component: () => import('@/views/NewGroupView.vue'), meta: { auth: true, layout: 'stack' } },
+    { path: '/signin', name: 'signin', component: () => import('@/views/SignInView.vue'), meta: { guest: true, layout: 'bare' } },
+    { path: '/welcome', name: 'welcome', component: () => import('@/views/WelcomeView.vue'), meta: { layout: 'bare' } },
+    { path: '/auth/callback', name: 'auth-callback', component: () => import('@/views/AuthCallbackView.vue'), meta: { layout: 'bare' } },
+    { path: '/onboarding', name: 'onboarding', component: () => import('@/views/OnboardingView.vue'), meta: { layout: 'bare' } },
+    { path: '/invite/:token', name: 'invite', component: () => import('@/views/InviteView.vue'), meta: { layout: 'bare' } },
     {
-      path: '/groups/:groupId/photos',
-      name: 'group-photos',
-      component: () => import('@/views/GroupPhotosView.vue'),
-      meta: { auth: true },
+      path: '/groups/:groupId',
+      name: 'group',
+      component: () => import('@/views/GroupView.vue'),
+      meta: { auth: true, layout: 'stack' },
     },
-    // The review stack used to live here; it is the group page now.
-    { path: '/groups/:groupId/swipe', redirect: (to) => ({ name: 'group', params: { groupId: to.params.groupId } }) },
+    // Older links: the collection is the group page, the review deck is the home screen.
+    { path: '/groups/:groupId/photos', redirect: (to) => ({ name: 'group', params: { groupId: to.params.groupId } }) },
+    { path: '/groups/:groupId/swipe', redirect: (to) => ({ name: 'home', query: { group: String(to.params.groupId) } }) },
     {
       path: '/groups/:groupId/upload',
       name: 'upload',
       component: () => import('@/views/UploadView.vue'),
-      meta: { auth: true },
+      meta: { auth: true, layout: 'stack' },
     },
     {
       path: '/groups/:groupId/settings',
       name: 'group-settings',
       component: () => import('@/views/GroupSettingsView.vue'),
-      meta: { auth: true },
+      meta: { auth: true, layout: 'stack' },
     },
     {
       path: '/groups/:groupId/items/:itemId',
       name: 'item',
       component: () => import('@/views/ItemView.vue'),
-      meta: { auth: true },
+      meta: { auth: true, layout: 'stack' },
     },
-    { path: '/account', name: 'account', component: () => import('@/views/AccountView.vue'), meta: { auth: true } },
+    { path: '/account', name: 'account', component: () => import('@/views/AccountView.vue'), meta: { auth: true, layout: 'tabs' } },
     {
       path: '/notifications',
       name: 'notifications',
       component: () => import('@/views/NotificationsView.vue'),
-      meta: { auth: true },
+      meta: { auth: true, layout: 'tabs' },
     },
-    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'), meta: { layout: 'bare' } },
   ],
 })
 

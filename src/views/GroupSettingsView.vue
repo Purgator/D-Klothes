@@ -5,11 +5,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { invokeFunction, supabase } from '@/lib/supabase'
 import { errorKey } from '@/lib/errors'
 import { buildInviteUrl, invitationState } from '@/lib/invitations'
+import { shareLink } from '@/lib/share'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupFeed } from '@/composables/useGroupFeed'
+import { useGroupsOverview } from '@/composables/useGroupsOverview'
 import { useNotifications } from '@/composables/useNotifications'
 import { useToast } from '@/composables/useToast'
-import PageTitle from '@/components/PageTitle.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import TopBar from '@/components/TopBar.vue'
 import type { Invitation, MembershipRequest } from '@/types/database'
 
 const { t, d } = useI18n()
@@ -17,6 +20,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
 const toast = useToast()
+const overview = useGroupsOverview()
 
 const groupId = computed(() => String(route.params.groupId))
 const userId = computed(() => auth.user.value?.id ?? null)
@@ -48,7 +52,7 @@ const rename = () =>
   run(async () => {
     const { error: e } = await supabase.from('groups').update({ name: name.value.trim() }).eq('id', groupId.value)
     if (e) throw e
-    await feed.load()
+    await Promise.all([feed.load(), overview.load()])
     toast.show(t('toast.saved'), { emoji: '✅' })
   })
 
@@ -82,7 +86,6 @@ const setMuted = (value: boolean) =>
 // --- Invitations -------------------------------------------------------------
 const invitations = ref<Invitation[]>([])
 const newInvite = ref<{ url: string; expires_at: string } | null>(null)
-const copied = ref(false)
 async function loadInvitations() {
   if (!feed.isOwner.value) return
   const { data } = await supabase.from('invitations').select('*').eq('group_id', groupId.value).order('created_at', { ascending: false })
@@ -95,17 +98,20 @@ const createInvitation = () =>
     const row = data?.[0]
     if (!row) throw new Error('unknown')
     newInvite.value = { url: buildInviteUrl(row.token), expires_at: row.expires_at }
-    copied.value = false
     await loadInvitations()
   })
+async function shareInvite() {
+  if (!newInvite.value) return
+  const outcome = await shareLink({ title: t('app.name'), text: t('settings.inviteShareText', { group: feed.group.value?.name ?? '' }), url: newInvite.value.url })
+  if (outcome === 'copied') toast.show(t('toast.linkCopied'), { emoji: '🔗' })
+}
 async function copyInvite() {
   if (!newInvite.value) return
   try {
     await navigator.clipboard.writeText(newInvite.value.url)
-    copied.value = true
     toast.show(t('toast.linkCopied'), { emoji: '🔗' })
   } catch {
-    copied.value = false
+    // The field below stays selectable.
   }
 }
 const revoke = (id: string) =>
@@ -137,7 +143,7 @@ const review = (id: string, approve: boolean) =>
   run(async () => {
     const { error: e } = await supabase.rpc('review_membership_request', { p_request_id: id, p_approve: approve })
     if (e) throw e
-    await Promise.all([loadRequests(), feed.load()])
+    await Promise.all([loadRequests(), feed.load(), overview.load()])
   })
 
 watch(() => feed.isOwner.value, () => void Promise.all([loadInvitations(), loadRequests()]), { immediate: true })
@@ -167,7 +173,8 @@ const leave = () =>
     if (!userId.value || !window.confirm(t('settings.leaveConfirm'))) return
     const { error: e } = await supabase.from('group_members').delete().eq('group_id', groupId.value).eq('user_id', userId.value)
     if (e) throw e
-    await router.replace({ name: 'home' })
+    void overview.load()
+    await router.replace({ name: 'groups' })
   })
 
 // --- Ownership transfer --------------------------------------------------------
@@ -181,7 +188,7 @@ const transfer = () =>
     const { error: e } = await supabase.rpc('transfer_group_ownership', { p_group_id: groupId.value, p_new_owner: target.user_id })
     if (e) throw e
     transferTarget.value = ''
-    await feed.load()
+    await Promise.all([feed.load(), overview.load()])
   })
 
 // --- Delete group --------------------------------------------------------------
@@ -189,179 +196,167 @@ const confirmName = ref('')
 const deleteGroup = () =>
   run(async () => {
     await invokeFunction('delete-group', { group_id: groupId.value, confirm_name: confirmName.value })
-    await router.replace({ name: 'home' })
+    void overview.load()
+    await router.replace({ name: 'groups' })
   })
 </script>
 
 <template>
-  <section>
-    <PageTitle :title="t('settings.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="feed.group.value?.name ?? t('app.back')" />
-    <p v-if="feed.loading.value" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
-    <p v-else-if="feed.notMember.value" class="alert-error" role="alert">{{ t('group.notMember') }}</p>
-    <div v-else-if="feed.group.value" class="flex flex-col gap-6">
-      <p v-if="error" class="alert-error" role="alert">{{ t(error) }}</p>
+  <div class="screen-scroll">
+    <TopBar :title="t('settings.title')" :back="{ name: 'group', params: { groupId } }" />
+    <div class="screen-body pb-10">
+      <p v-if="feed.loading.value" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
+      <p v-else-if="feed.notMember.value" class="alert-error" role="alert">{{ t('group.notMember') }}</p>
+      <div v-else-if="feed.group.value" class="flex flex-col">
+        <p v-if="error" class="alert-error mb-4" role="alert">{{ t(error) }}</p>
 
-      <!-- Rename (owner) -->
-      <form v-if="feed.isOwner.value" class="card flex flex-col gap-2" @submit.prevent="rename">
-        <label for="rename" class="label">{{ t('settings.rename') }}</label>
-        <div class="flex gap-2">
-          <input id="rename" v-model="name" type="text" maxlength="80" required class="input" />
-          <button type="submit" class="btn-primary" :disabled="busy || !name.trim() || name.trim() === feed.group.value.name">{{ t('app.save') }}</button>
-        </div>
-      </form>
+        <!-- Requests (owner), first: it is the thing that needs action -->
+        <template v-if="feed.isOwner.value">
+          <h2 id="requests-title" class="section-title mt-2">{{ t('settings.requests') }}</h2>
+          <section class="list-group" aria-labelledby="requests-title">
+            <p v-if="!requests.length" class="list-row text-sm text-stone-500">{{ t('settings.noRequests') }}</p>
+            <div v-for="req in requests" :key="req.id" class="flex flex-col gap-2 px-4 py-3 text-sm">
+              <p class="font-semibold">{{ t('settings.requestFrom', { name: req.profile?.display_name ?? '?' }) }}</p>
+              <p class="whitespace-pre-wrap rounded-2xl bg-stone-50 px-3 py-2 text-stone-700">{{ req.message || t('settings.requestMessageEmpty') }}</p>
+              <p class="text-xs text-stone-400">{{ d(new Date(req.created_at), 'long') }}</p>
+              <div class="flex gap-2">
+                <button type="button" class="btn-primary btn-sm flex-1" :disabled="busy" @click="review(req.id, true)"><AppIcon name="check" size="16" /> {{ t('settings.approve') }}</button>
+                <button type="button" class="btn-secondary btn-sm flex-1" :disabled="busy" @click="review(req.id, false)"><AppIcon name="x" size="16" /> {{ t('settings.reject') }}</button>
+              </div>
+            </div>
+            <details v-if="reviewedRequests.length" class="px-4 py-3">
+              <summary class="cursor-pointer text-sm text-stone-600">{{ t('settings.requestHistory', { count: reviewedRequests.length }, reviewedRequests.length) }}</summary>
+              <ul class="mt-2 divide-y divide-stone-100 text-sm">
+                <li v-for="req in reviewedRequests" :key="req.id" class="flex items-center justify-between gap-2 py-2">
+                  <span>
+                    {{ req.profile?.display_name ?? '?' }}
+                    <span class="text-xs text-stone-400">· {{ d(new Date(req.reviewed_at ?? req.created_at), 'short') }}</span>
+                  </span>
+                  <span class="pill" :class="req.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'">
+                    {{ t(`settings.requestStatus.${req.status}`) }}
+                  </span>
+                </li>
+              </ul>
+            </details>
+          </section>
 
-      <!-- Upload policy (owner) -->
-      <fieldset v-if="feed.isOwner.value" class="card flex flex-col gap-2" :disabled="busy">
-        <legend class="label">{{ t('group.uploadPolicy') }}</legend>
-        <label class="flex items-center gap-2 text-sm">
-          <input type="radio" name="settings-upload-policy" :checked="membersCanUpload" @change="saveUploadPolicy(true)" />
-          {{ t('group.uploadPolicyEveryone') }}
-        </label>
-        <label class="flex items-center gap-2 text-sm">
-          <input type="radio" name="settings-upload-policy" :checked="!membersCanUpload" @change="saveUploadPolicy(false)" />
-          {{ t('group.uploadPolicyOwner') }}
-        </label>
-      </fieldset>
-      <p v-else-if="!feed.canUpload.value" class="text-sm text-stone-500">{{ t('group.uploadOwnerOnly') }}</p>
+          <!-- Invitations -->
+          <h2 id="invitations-title" class="section-title">{{ t('settings.invitations') }}</h2>
+          <section class="list-group" aria-labelledby="invitations-title">
+            <div class="flex flex-col gap-3 px-4 py-3">
+              <p class="text-sm text-stone-600">{{ t('settings.invitationsHelp') }}</p>
+              <div v-if="newInvite" class="alert-info flex flex-col gap-2" role="status">
+                <p class="font-semibold">{{ t('settings.newInviteTitle') }}</p>
+                <p>{{ t('settings.newInviteBody', { date: d(new Date(newInvite.expires_at), 'long') }) }}</p>
+                <input type="text" readonly class="input font-mono text-xs" :value="newInvite.url" :aria-label="t('settings.newInviteTitle')" @focus="($event.target as HTMLInputElement).select()" />
+                <div class="flex gap-2">
+                  <button type="button" class="btn-primary btn-sm flex-1" @click="shareInvite"><AppIcon name="share" size="16" /> {{ t('app.share') }}</button>
+                  <button type="button" class="btn-secondary btn-sm flex-1" @click="copyInvite"><AppIcon name="link" size="16" /> {{ t('app.copy') }}</button>
+                </div>
+              </div>
+              <button type="button" class="btn-secondary" :disabled="busy" @click="createInvitation"><AppIcon name="user-plus" size="20" /> {{ t('settings.createInvitation') }}</button>
+            </div>
+            <p v-if="!invitations.length" class="list-row text-sm text-stone-500">{{ t('settings.noInvitations') }}</p>
+            <div v-for="inv in invitations" :key="inv.id" class="list-row text-sm">
+              <span class="pill shrink-0" :class="invitationState(inv) === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'">
+                {{ t(`settings.inviteState.${invitationState(inv)}`) }}
+              </span>
+              <span class="min-w-0 flex-1 text-xs text-stone-500">
+                {{ t('settings.inviteCreated', { date: d(new Date(inv.created_at), 'short') }) }} ·
+                {{ t('settings.inviteExpires', { date: d(new Date(inv.expires_at), 'long') }) }}
+              </span>
+              <button v-if="invitationState(inv) === 'active'" type="button" class="btn-secondary btn-sm" :disabled="busy" @click="revoke(inv.id)">{{ t('settings.revoke') }}</button>
+            </div>
+          </section>
+        </template>
 
-      <!-- Notifications for this group (every member) -->
-      <section class="card flex flex-col gap-2" aria-labelledby="mute-title">
-        <h2 id="mute-title" class="text-lg font-medium">{{ t('settings.notifications') }}</h2>
-        <label class="flex items-center gap-3 text-sm">
-          <input type="checkbox" class="h-5 w-5 accent-brand-700" :checked="!muted" :disabled="busy" @change="setMuted(!($event.target as HTMLInputElement).checked)" />
-          <span>{{ t('settings.notifyMe') }}</span>
-        </label>
-        <p class="help">{{ t('settings.notifyHint') }}</p>
-      </section>
-
-      <!-- Members -->
-      <section class="card" aria-labelledby="members-title">
-        <div class="mb-2 flex items-baseline justify-between gap-2">
-          <h2 id="members-title" class="text-lg font-medium">{{ t('settings.members') }}</h2>
-          <span v-if="memberLimit" class="text-xs text-stone-500">
-            {{ t('settings.memberCapacity', { count: feed.members.value.length, limit: memberLimit }, feed.members.value.length) }}
+        <!-- Members -->
+        <h2 id="members-title" class="section-title" :class="feed.isOwner.value ? '' : 'mt-2'">
+          {{ t('settings.members') }}
+          <span v-if="memberLimit" class="ml-1 font-normal normal-case tracking-normal text-stone-400">
+            · {{ t('settings.memberCapacity', { count: feed.members.value.length, limit: memberLimit }, feed.members.value.length) }}
           </span>
-        </div>
-        <ul class="divide-y divide-stone-100">
-          <li v-for="m in feed.members.value" :key="m.user_id" class="flex items-center justify-between gap-2 py-2 text-sm">
-            <span>
-              {{ m.profile?.display_name ?? '?' }}
-              <span v-if="m.user_id === userId" class="text-stone-400">({{ t('group.you') }})</span>
-              <span class="ml-1 text-xs text-stone-400">{{ t('settings.joinedOn', { date: d(new Date(m.joined_at), 'short') }) }}</span>
-              <span v-if="m.role === 'owner'" class="ml-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-800">{{ t('home.ownerBadge') }}</span>
+        </h2>
+        <section class="list-group" aria-labelledby="members-title">
+          <div v-for="m in feed.members.value" :key="m.user_id" class="list-row text-sm">
+            <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-100 text-sm font-bold text-stone-600" aria-hidden="true">
+              {{ (m.profile?.display_name ?? '?').trim()[0]?.toUpperCase() }}
             </span>
-            <button
-              v-if="feed.isOwner.value && m.role === 'member'"
-              type="button"
-              class="btn-danger min-h-9 px-3 py-1"
-              :disabled="busy"
-              @click="removeMember(m.user_id, m.profile?.display_name ?? '?')"
-            >
+            <span class="min-w-0 flex-1">
+              <span class="flex items-center gap-1.5 font-medium">
+                <span class="truncate">{{ m.profile?.display_name ?? '?' }}</span>
+                <span v-if="m.user_id === userId" class="font-normal text-stone-400">({{ t('group.you') }})</span>
+                <AppIcon v-if="m.role === 'owner'" name="crown" size="14" class="text-amber-500" :title="t('home.ownerBadge')" />
+              </span>
+              <span class="block text-xs text-stone-400">{{ t('settings.joinedOn', { date: d(new Date(m.joined_at), 'short') }) }}</span>
+            </span>
+            <button v-if="feed.isOwner.value && m.role === 'member'" type="button" class="btn-danger btn-sm" :disabled="busy" @click="removeMember(m.user_id, m.profile?.display_name ?? '?')">
               {{ t('settings.remove') }}
             </button>
-          </li>
-        </ul>
-        <div class="mt-3">
-          <button v-if="!feed.isOwner.value" type="button" class="btn-danger" :disabled="busy" @click="leave">{{ t('settings.leave') }}</button>
-          <p v-else class="text-xs text-stone-500">{{ t('settings.ownerCannotLeave') }}</p>
-        </div>
-      </section>
-
-      <template v-if="feed.isOwner.value">
-        <!-- Requests -->
-        <section class="card" aria-labelledby="requests-title">
-          <h2 id="requests-title" class="mb-2 text-lg font-medium">{{ t('settings.requests') }}</h2>
-          <p v-if="!requests.length" class="text-sm text-stone-500">{{ t('settings.noRequests') }}</p>
-          <ul v-else class="flex flex-col gap-3">
-            <li v-for="req in requests" :key="req.id" class="rounded-lg border border-stone-200 p-3 text-sm">
-              <p class="font-medium">{{ t('settings.requestFrom', { name: req.profile?.display_name ?? '?' }) }}</p>
-              <p class="mt-1 whitespace-pre-wrap text-stone-700">{{ req.message || t('settings.requestMessageEmpty') }}</p>
-              <p class="mt-1 text-xs text-stone-400">{{ d(new Date(req.created_at), 'long') }}</p>
-              <div class="mt-2 flex gap-2">
-                <button type="button" class="btn-primary" :disabled="busy" @click="review(req.id, true)">{{ t('settings.approve') }}</button>
-                <button type="button" class="btn-secondary" :disabled="busy" @click="review(req.id, false)">{{ t('settings.reject') }}</button>
-              </div>
-            </li>
-          </ul>
-          <details v-if="reviewedRequests.length" class="mt-3">
-            <summary class="cursor-pointer text-sm text-stone-600">{{ t('settings.requestHistory', { count: reviewedRequests.length }, reviewedRequests.length) }}</summary>
-            <ul class="mt-2 divide-y divide-stone-100 text-sm">
-              <li v-for="req in reviewedRequests" :key="req.id" class="flex items-center justify-between gap-2 py-2">
-                <span>
-                  {{ req.profile?.display_name ?? '?' }}
-                  <span class="text-xs text-stone-400">· {{ d(new Date(req.reviewed_at ?? req.created_at), 'short') }}</span>
-                </span>
-                <span
-                  class="rounded-full px-2 py-0.5 text-xs"
-                  :class="req.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'"
-                >
-                  {{ t(`settings.requestStatus.${req.status}`) }}
-                </span>
-              </li>
-            </ul>
-          </details>
-        </section>
-
-        <!-- Invitations -->
-        <section class="card" aria-labelledby="invitations-title">
-          <h2 id="invitations-title" class="mb-1 text-lg font-medium">{{ t('settings.invitations') }}</h2>
-          <p class="mb-3 text-sm text-stone-600">{{ t('settings.invitationsHelp') }}</p>
-          <div v-if="newInvite" class="alert-info mb-3 flex flex-col gap-2" role="status">
-            <p class="font-medium">{{ t('settings.newInviteTitle') }}</p>
-            <p>{{ t('settings.newInviteBody', { date: d(new Date(newInvite.expires_at), 'long') }) }}</p>
-            <div class="flex flex-col gap-2 sm:flex-row">
-              <input type="text" readonly class="input font-mono text-xs" :value="newInvite.url" :aria-label="t('settings.newInviteTitle')" @focus="($event.target as HTMLInputElement).select()" />
-              <button type="button" class="btn-secondary" @click="copyInvite">{{ copied ? t('app.copied') : t('app.copy') }}</button>
-            </div>
           </div>
-          <button type="button" class="btn-primary mb-3" :disabled="busy" @click="createInvitation">{{ t('settings.createInvitation') }}</button>
-          <p v-if="!invitations.length" class="text-sm text-stone-500">{{ t('settings.noInvitations') }}</p>
-          <ul v-else class="divide-y divide-stone-100 text-sm">
-            <li v-for="inv in invitations" :key="inv.id" class="flex items-center justify-between gap-2 py-2">
-              <span>
-                <span
-                  class="mr-2 rounded-full px-2 py-0.5 text-xs"
-                  :class="invitationState(inv) === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'"
-                >
-                  {{ t(`settings.inviteState.${invitationState(inv)}`) }}
-                </span>
-                <span class="text-xs text-stone-500">
-                  {{ t('settings.inviteCreated', { date: d(new Date(inv.created_at), 'short') }) }} ·
-                  {{ t('settings.inviteExpires', { date: d(new Date(inv.expires_at), 'long') }) }}
-                </span>
-              </span>
-              <button v-if="invitationState(inv) === 'active'" type="button" class="btn-secondary min-h-9 px-3 py-1" :disabled="busy" @click="revoke(inv.id)">
-                {{ t('settings.revoke') }}
-              </button>
-            </li>
-          </ul>
+          <button v-if="!feed.isOwner.value" type="button" class="list-row font-medium text-red-700 hover:bg-red-50" :disabled="busy" @click="leave">
+            <AppIcon name="logout" size="18" /> {{ t('settings.leave') }}
+          </button>
+          <p v-else class="list-row text-xs text-stone-500">{{ t('settings.ownerCannotLeave') }}</p>
         </section>
 
-        <!-- Transfer ownership -->
-        <section v-if="otherMembers.length" class="card" aria-labelledby="transfer-title">
-          <h2 id="transfer-title" class="mb-2 text-lg font-medium">{{ t('settings.transfer') }}</h2>
-          <form class="flex flex-col gap-2 sm:flex-row" @submit.prevent="transfer">
-            <label for="transfer-to" class="sr-only">{{ t('settings.transferTo') }}</label>
-            <select id="transfer-to" v-model="transferTarget" class="input" required>
-              <option value="" disabled>{{ t('settings.transferTo') }}</option>
-              <option v-for="m in otherMembers" :key="m.user_id" :value="m.user_id">{{ m.profile?.display_name ?? '?' }}</option>
-            </select>
-            <button type="submit" class="btn-secondary" :disabled="busy || !transferTarget">{{ t('settings.transferButton') }}</button>
+        <!-- Group options -->
+        <h2 id="options-title" class="section-title">{{ t('settings.options') }}</h2>
+        <section class="list-group" aria-labelledby="options-title">
+          <form v-if="feed.isOwner.value" class="flex flex-col gap-2 px-4 py-3" @submit.prevent="rename">
+            <label for="rename" class="label">{{ t('settings.rename') }}</label>
+            <div class="flex gap-2">
+              <input id="rename" v-model="name" type="text" maxlength="80" required class="input" />
+              <button type="submit" class="btn-primary shrink-0" :disabled="busy || !name.trim() || name.trim() === feed.group.value.name">{{ t('app.save') }}</button>
+            </div>
           </form>
+          <fieldset v-if="feed.isOwner.value" class="px-4 py-3" :disabled="busy">
+            <legend class="label">{{ t('group.uploadPolicy') }}</legend>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <label class="flex items-center gap-2 rounded-2xl border-2 px-3 py-2" :class="membersCanUpload ? 'border-brand-500 bg-brand-50' : 'border-stone-200'">
+                <input type="radio" name="settings-upload-policy" class="accent-brand-600" :checked="membersCanUpload" @change="saveUploadPolicy(true)" />
+                {{ t('group.uploadPolicyEveryone') }}
+              </label>
+              <label class="flex items-center gap-2 rounded-2xl border-2 px-3 py-2" :class="!membersCanUpload ? 'border-brand-500 bg-brand-50' : 'border-stone-200'">
+                <input type="radio" name="settings-upload-policy" class="accent-brand-600" :checked="!membersCanUpload" @change="saveUploadPolicy(false)" />
+                {{ t('group.uploadPolicyOwner') }}
+              </label>
+            </div>
+          </fieldset>
+          <p v-else-if="!feed.canUpload.value" class="list-row text-sm text-stone-500">{{ t('group.uploadOwnerOnly') }}</p>
+          <label class="list-row cursor-pointer">
+            <AppIcon :name="muted ? 'bell-off' : 'bell'" size="20" class="text-stone-500" />
+            <span class="min-w-0 flex-1">
+              <span class="block">{{ t('settings.notifyMe') }}</span>
+              <span class="block text-xs text-stone-500">{{ t('settings.notifyHint') }}</span>
+            </span>
+            <input type="checkbox" class="toggle" :checked="!muted" :disabled="busy" @change="setMuted(!($event.target as HTMLInputElement).checked)" />
+          </label>
         </section>
 
-        <!-- Delete group -->
-        <section class="card border-red-200" aria-labelledby="danger-title">
-          <h2 id="danger-title" class="mb-1 text-lg font-medium text-red-800">{{ t('settings.deleteGroup') }}</h2>
-          <p class="mb-3 text-sm text-stone-600">{{ t('settings.deleteGroupBody') }}</p>
-          <form class="flex flex-col gap-2 sm:flex-row" @submit.prevent="deleteGroup">
-            <label for="confirm-name" class="sr-only">{{ t('settings.deleteGroupConfirmLabel') }}</label>
-            <input id="confirm-name" v-model="confirmName" type="text" class="input" :placeholder="feed.group.value.name" autocomplete="off" />
-            <button type="submit" class="btn-danger" :disabled="busy || confirmName.trim() !== feed.group.value.name">{{ t('settings.deleteGroupButton') }}</button>
-          </form>
-        </section>
-      </template>
-      <p v-else class="text-sm text-stone-500">{{ t('settings.ownerOnly') }}</p>
+        <template v-if="feed.isOwner.value">
+          <h2 id="danger-title" class="section-title text-red-700">{{ t('settings.danger') }}</h2>
+          <section class="list-group ring-red-200" aria-labelledby="danger-title">
+            <form v-if="otherMembers.length" class="flex flex-col gap-2 px-4 py-3" @submit.prevent="transfer">
+              <label for="transfer-to" class="label">{{ t('settings.transfer') }}</label>
+              <div class="flex gap-2">
+                <select id="transfer-to" v-model="transferTarget" class="input" required>
+                  <option value="" disabled>{{ t('settings.transferTo') }}</option>
+                  <option v-for="m in otherMembers" :key="m.user_id" :value="m.user_id">{{ m.profile?.display_name ?? '?' }}</option>
+                </select>
+                <button type="submit" class="btn-secondary shrink-0" :disabled="busy || !transferTarget">{{ t('settings.transferButton') }}</button>
+              </div>
+            </form>
+            <form class="flex flex-col gap-2 px-4 py-3" @submit.prevent="deleteGroup">
+              <label for="confirm-name" class="label text-red-800">{{ t('settings.deleteGroup') }}</label>
+              <p class="text-sm text-stone-600">{{ t('settings.deleteGroupBody') }}</p>
+              <input id="confirm-name" v-model="confirmName" type="text" class="input" :placeholder="feed.group.value.name" autocomplete="off" :aria-label="t('settings.deleteGroupConfirmLabel')" />
+              <button type="submit" class="btn-danger" :disabled="busy || confirmName.trim() !== feed.group.value.name"><AppIcon name="trash" size="18" /> {{ t('settings.deleteGroupButton') }}</button>
+            </form>
+          </section>
+        </template>
+        <p v-else class="mt-4 text-center text-xs text-stone-500">{{ t('settings.ownerOnly') }}</p>
+      </div>
     </div>
-  </section>
+  </div>
 </template>

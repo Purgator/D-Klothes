@@ -1,63 +1,184 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-brand-50: #f0fdfa;
-  --color-brand-100: #ccfbf1;
-  --color-brand-600: #0d9488;
-  --color-brand-700: #0f766e;
-  --color-brand-800: #115e59;
+  --color-brand-50: #effcf9;
+  --color-brand-100: #d2f7ee;
+  --color-brand-200: #a8eedd;
+  --color-brand-300: #6fdfc8;
+  --color-brand-400: #3cc8ae;
+  --color-brand-500: #1fab94;
+  --color-brand-600: #148a78;
+  --color-brand-700: #126e62;
+  --color-brand-800: #12584f;
+  --color-brand-900: #114942;
+  --color-brand-950: #052a27;
+
+  --color-keep-500: #10b981;
+  --color-keep-600: #059669;
+  --color-letgo-500: #f59e0b;
+  --color-letgo-600: #d97706;
+  --color-want-500: #f43f5e;
+  --color-want-600: #e11d48;
+
+  --radius-4xl: 2rem;
+
+  --shadow-card: 0 10px 30px -10px rgb(17 24 39 / 0.25), 0 2px 8px -2px rgb(17 24 39 / 0.1);
+  --shadow-float: 0 8px 24px -6px rgb(17 24 39 / 0.3);
+  --shadow-bar: 0 -8px 24px -12px rgb(17 24 39 / 0.25);
 }
 
 @layer base {
   :root {
     color-scheme: light;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   html {
     -webkit-text-size-adjust: 100%;
+    height: 100%;
   }
   body {
-    @apply min-h-dvh bg-stone-50 text-stone-900 antialiased;
+    @apply bg-stone-100 text-stone-900 antialiased;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app {
+    height: 100%;
   }
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-brand-700;
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  button,
+  a {
+    touch-action: manipulation;
   }
 }
 
+/* Base button, shared by every variant below and usable on its own. */
+@utility btn {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-base font-semibold transition active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50;
+}
+
 @layer components {
-  .btn {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50;
+  /* ---- Screens ------------------------------------------------------------ */
+  /* A screen fills the frame. `.screen-scroll` scrolls its content; `.screen-fixed` never does. */
+  .screen-scroll {
+    @apply h-full min-h-0 overflow-y-auto overscroll-contain;
+    -webkit-overflow-scrolling: touch;
   }
+  .screen-fixed {
+    @apply flex h-full min-h-0 flex-col overflow-hidden;
+  }
+  .screen-body {
+    @apply mx-auto w-full max-w-lg px-4;
+  }
+
+  /* ---- Buttons (the base `btn` is a utility so the variants can @apply it) ---- */
   .btn-primary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 bg-brand-700 text-white hover:bg-brand-800;
+    @apply btn bg-brand-600 text-white shadow-float hover:bg-brand-700;
   }
   .btn-secondary {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 border border-stone-300 bg-white text-stone-800 hover:bg-stone-100;
+    @apply btn bg-white text-stone-800 ring-1 ring-stone-200 hover:bg-stone-50;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-brand-700 hover:bg-brand-50;
   }
   .btn-danger {
-    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 border border-red-300 bg-white text-red-700 hover:bg-red-50;
+    @apply btn bg-white text-red-700 ring-1 ring-red-200 hover:bg-red-50;
   }
+  .btn-sm {
+    @apply min-h-10 rounded-xl px-4 text-sm;
+  }
+  .btn-icon {
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-stone-700 transition hover:bg-stone-200/70 active:scale-95 disabled:opacity-50;
+  }
+  .vote-btn {
+    @apply inline-flex shrink-0 items-center justify-center rounded-full bg-white shadow-float ring-2 transition hover:scale-105 active:scale-90;
+  }
+  .fab {
+    @apply inline-flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-float transition hover:bg-brand-700 active:scale-95;
+  }
+
+  /* ---- Forms -------------------------------------------------------------- */
   .input {
-    @apply block w-full min-h-11 rounded-lg border border-stone-300 bg-white px-3 py-2 text-base text-stone-900 placeholder:text-stone-400 focus:border-brand-700;
+    @apply block min-h-12 w-full rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-base text-stone-900 placeholder:text-stone-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-200;
   }
   .label {
-    @apply mb-1 block text-sm font-medium text-stone-700;
+    @apply mb-1.5 block text-sm font-medium text-stone-700;
   }
   .help {
-    @apply mt-1 text-xs text-stone-500;
+    @apply mt-1.5 text-xs leading-relaxed text-stone-500;
   }
+  .toggle {
+    @apply relative h-7 w-12 shrink-0 cursor-pointer appearance-none rounded-full bg-stone-300 transition checked:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .toggle::after {
+    content: '';
+    @apply absolute left-0.5 top-0.5 h-6 w-6 rounded-full bg-white shadow transition;
+  }
+  .toggle:checked::after {
+    transform: translateX(1.25rem);
+  }
+
+  /* ---- Surfaces ----------------------------------------------------------- */
   .card {
-    @apply rounded-xl border border-stone-200 bg-white p-4 shadow-sm;
+    @apply rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-900/5;
   }
+  .list-group {
+    @apply overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-stone-900/5;
+  }
+  .list-row {
+    @apply flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left text-base;
+  }
+  .list-row + .list-row,
+  .list-group > * + * {
+    @apply border-t border-stone-100;
+  }
+  .section-title {
+    @apply mb-2 mt-6 px-1 text-xs font-semibold uppercase tracking-wider text-stone-500;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge {
+    @apply inline-flex min-w-5 items-center justify-center rounded-full bg-want-500 px-1.5 text-[11px] font-bold leading-5 text-white;
+  }
+
   .alert-error {
-    @apply rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800;
+    @apply rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800;
   }
   .alert-info {
-    @apply rounded-lg border border-brand-100 bg-brand-50 px-3 py-2 text-sm text-brand-800;
+    @apply rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm text-brand-800;
   }
   .alert-warning {
-    @apply rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900;
+    @apply rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900;
   }
   .sr-only-focusable {
     @apply sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2;
+  }
+
+  /* ---- Brand backdrop (welcome, sign-in) ---------------------------------- */
+  .brand-gradient {
+    background: radial-gradient(120% 80% at 50% 0%, #1fab94 0%, #126e62 55%, #0b3f39 100%);
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
+  .pb-safe {
+    padding-bottom: var(--safe-bottom);
+  }
+  .mb-safe {
+    margin-bottom: var(--safe-bottom);
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

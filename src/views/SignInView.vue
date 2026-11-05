@@ -5,6 +5,9 @@ import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { errorKey } from '@/lib/errors'
 import { isConfigured } from '@/lib/supabase'
+import AppIcon from '@/components/AppIcon.vue'
+import Illustration from '@/components/Illustration.vue'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -40,46 +43,57 @@ async function submit() {
 </script>
 
 <template>
-  <section class="mx-auto mt-6 max-w-md">
-    <h1 class="mb-1 text-2xl font-semibold">{{ t('auth.title') }}</h1>
-    <p class="mb-6 text-sm text-stone-600">{{ t('app.tagline') }}</p>
-
-    <div v-if="sentTo" class="card flex flex-col gap-3" role="status">
-      <p>{{ t('auth.sent', { email: sentTo }) }}</p>
-      <p class="text-sm text-stone-600">{{ t('auth.sentHint') }}</p>
-      <button type="button" class="btn-secondary self-start" @click="sentTo = null">{{ t('app.back') }}</button>
+  <div class="screen-scroll brand-gradient flex flex-col">
+    <div class="mx-auto flex w-full max-w-lg items-center justify-between px-4 pt-safe">
+      <RouterLink :to="{ name: 'welcome' }" class="btn-icon mt-2 text-white hover:bg-white/15" :aria-label="t('app.back')"><AppIcon name="arrow-left" /></RouterLink>
+      <LanguageSwitcher light class="mt-2" />
+    </div>
+    <div class="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-end px-6 pb-6 pt-2 text-center text-white">
+      <Illustration :name="sentTo ? 'mail' : 'hero'" class="w-48 max-w-[50%]" />
+      <h1 class="mt-4 text-3xl font-black tracking-tight">{{ sentTo ? t('auth.sentTitle') : t('auth.title') }}</h1>
+      <p class="mt-2 max-w-sm text-sm text-white/80">{{ sentTo ? t('auth.sent', { email: sentTo }) : t('app.tagline') }}</p>
     </div>
 
-    <p v-else-if="!isConfigured" class="alert-warning" role="alert">{{ t('app.notConfigured') }}</p>
-
-    <!-- Named and typed like a plain sign-in form so browsers, password managers and
-         email-alias extensions recognise the field and offer to fill or remember it. -->
-    <form v-else id="signin" name="signin" method="post" action="." class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
-      <p class="text-sm text-stone-700">{{ t('auth.intro') }}</p>
-      <div>
-        <label for="email" class="label">{{ t('auth.email') }}</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          name="email"
-          autocomplete="username"
-          inputmode="email"
-          enterkeyhint="send"
-          spellcheck="false"
-          autocapitalize="off"
-          required
-          class="input"
-          :placeholder="t('auth.emailPlaceholder')"
-          :aria-invalid="error === 'auth.invalidEmail' ? 'true' : undefined"
-          aria-describedby="email-error"
-        />
-        <p v-if="error" id="email-error" class="alert-error mt-2" role="alert">{{ t(error) }}</p>
+    <div class="mx-auto w-full max-w-lg rounded-t-4xl bg-white px-6 pb-safe pt-6 shadow-2xl">
+      <div v-if="sentTo" class="flex flex-col gap-3 pb-6" role="status">
+        <p class="alert-info">{{ t('auth.sentHint') }}</p>
+        <button type="button" class="btn-secondary" @click="sentTo = null">{{ t('auth.anotherEmail') }}</button>
       </div>
-      <button type="submit" class="btn-primary" :disabled="sending">
-        {{ sending ? t('auth.sending') : t('auth.sendLink') }}
-      </button>
-      <p class="text-xs text-stone-500">{{ t('auth.privacy') }}</p>
-    </form>
-  </section>
+
+      <p v-else-if="!isConfigured" class="alert-warning mb-6" role="alert">{{ t('app.notConfigured') }}</p>
+
+      <!-- Named and typed like a plain sign-in form so browsers, password managers and
+           email-alias extensions recognise the field and offer to fill or remember it. -->
+      <form v-else id="signin" name="signin" method="post" action="." class="flex flex-col gap-4 pb-6" novalidate @submit.prevent="submit">
+        <p class="text-sm text-stone-600">{{ t('auth.intro') }}</p>
+        <div>
+          <label for="email" class="label">{{ t('auth.email') }}</label>
+          <div class="relative">
+            <AppIcon name="mail" size="20" class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input
+              id="email"
+              v-model="email"
+              type="email"
+              name="email"
+              autocomplete="username"
+              inputmode="email"
+              enterkeyhint="send"
+              spellcheck="false"
+              autocapitalize="off"
+              required
+              class="input pl-12"
+              :placeholder="t('auth.emailPlaceholder')"
+              :aria-invalid="error === 'auth.invalidEmail' ? 'true' : undefined"
+              aria-describedby="email-error"
+            />
+          </div>
+          <p v-if="error" id="email-error" class="alert-error mt-2" role="alert">{{ t(error) }}</p>
+        </div>
+        <button type="submit" class="btn-primary" :disabled="sending">
+          <AppIcon name="send" size="20" /> {{ sending ? t('auth.sending') : t('auth.sendLink') }}
+        </button>
+        <p class="flex gap-2 text-xs text-stone-500"><AppIcon name="lock" size="16" class="mt-0.5 shrink-0 text-brand-600" /> {{ t('auth.privacy') }}</p>
+      </form>
+    </div>
+  </div>
 </template>

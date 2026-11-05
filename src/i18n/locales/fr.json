@@ -34,6 +34,7 @@
     "title": "Bienvenue sur D-Klothes",
     "lead": "Une appli privée, entre amis, pour trier sa garde-robe : vous photographiez un vêtement, vos amis vous disent s’il vous va, s’il ne vous va plus, ou s’ils le veulent.",
     "cta": "Se connecter ou créer un compte",
+    "openApp": "Ouvrir l’app",
     "shareText": "Trions nos garde-robes ensemble avec D-Klothes !",
     "howTitle": "Comment ça marche",
     "steps": {
@@ -63,8 +64,10 @@
     "en": "English"
   },
   "nav": {
-    "home": "Mes groupes",
-    "account": "Mon compte",
+    "review": "À trier",
+    "groups": "Groupes",
+    "notifications": "Alertes",
+    "account": "Moi",
     "signOut": "Se déconnecter",
     "signIn": "Se connecter"
   },
@@ -76,6 +79,8 @@
     "sendLink": "Recevoir le lien",
     "sending": "Envoi…",
     "sent": "Lien envoyé ! Ouvrez l’e‑mail reçu à {email} et cliquez sur le lien pour vous connecter.",
+    "sentTitle": "Regardez vos e‑mails",
+    "anotherEmail": "Utiliser une autre adresse",
     "sentHint": "Le lien expire rapidement et ne fonctionne qu’une fois. Vérifiez vos courriers indésirables.",
     "invalidEmail": "Entrez une adresse e‑mail valide.",
     "callbackTitle": "Connexion en cours…",
@@ -93,6 +98,8 @@
   },
   "home": {
     "title": "Mes groupes",
+    "welcomeTitle": "Commencez par un groupe",
+    "createHint": "Vous obtiendrez ensuite des liens d’invitation à partager à vos amis. Seuls les membres acceptés voient les photos.",
     "empty": "Vous n’êtes membre d’aucun groupe pour l’instant. Créez-en un ou utilisez un lien d’invitation reçu d’un ami.",
     "createGroup": "Créer un groupe",
     "groupName": "Nom du groupe",
@@ -111,7 +118,9 @@
   },
   "group": {
     "photos": "Toutes les photos",
-    "toReview": "{count} à passer en revue | {count} à passer en revue | {count} à passer en revue",
+    "toReview": "{count} à trier | {count} à trier | {count} à trier",
+    "photoCount": "{count} photos | {count} photo | {count} photos",
+    "reviewNow": "Donner mon avis ({count}) | Donner mon avis ({count}) | Donner mon avis ({count})",
     "settings": "Paramètres",
     "addPhoto": "Ajouter une photo",
     "emptyFeed": "Aucune photo pour l’instant. Ajoutez la première !",
@@ -136,6 +145,7 @@
     "let_go": "Ça ne te va pas",
     "want": "Je le veux",
     "yourVote": "Votre avis : {vote}",
+    "tapToRemove": "touchez à nouveau pour le retirer",
     "remove": "Retirer mon avis",
     "ownItem": "C’est votre photo : vous ne donnez pas d’avis dessus.",
     "counts": "Ça te va {keep} · Ça ne te va pas {letGo} · Je le veux {want}",
@@ -150,6 +160,7 @@
   "upload": {
     "title": "Ajouter une photo",
     "choose": "Choisir une photo",
+    "chooseHint": "Touchez pour choisir une photo ou en prendre une. JPEG, PNG, WebP ou HEIC.",
     "changePhoto": "Changer de photo",
     "itemTitle": "Titre (facultatif)",
     "itemTitlePlaceholder": "Ex. Veste en jean bleue",
@@ -174,6 +185,7 @@
     "deleteBody": "La photo, ses votes et son enregistrement seront supprimés définitivement.",
     "deleting": "Suppression…",
     "editTitle": "Modifier le titre",
+    "interested": "Qui le veut",
     "photoAlt": "Photo de vêtement : {title}",
     "photoAltUntitled": "Photo de vêtement sans titre",
     "added": "Ajoutée le {date}"
@@ -198,6 +210,8 @@
     "transferConfirm": "Transférer la propriété à {name} ? Vous deviendrez membre ordinaire.",
     "transferButton": "Transférer",
     "invitations": "Liens d’invitation",
+    "inviteShareText": "Rejoins mon groupe « {group} » sur D-Klothes !",
+    "options": "Options",
     "invitationsHelp": "Chaque lien est à usage unique et expire après 24 heures. Le lien complet n’est affiché qu’une seule fois.",
     "createInvitation": "Créer un lien d’invitation",
     "newInviteTitle": "Nouveau lien d’invitation",
@@ -249,6 +263,7 @@
     "email": "E‑mail",
     "displayName": "Nom affiché",
     "displayNameFixed": "Le nom affiché est choisi à l’inscription et ne se modifie pas.",
+    "preferences": "Préférences",
     "language": "Langue de l’interface",
     "about": "À propos de D-Klothes",
     "aboutBody": "La page d’accueil explique l’app et comment l’installer. Partagez-la à vos amis.",
@@ -297,6 +312,7 @@
   "notifications": {
     "title": "Notifications",
     "bell": "Notifications, rien de nouveau | Notifications, {count} non lue | Notifications, {count} non lues",
+    "emptyTitle": "Tout est calme",
     "empty": "Rien pour l’instant. Vous serez prévenu·e ici quand quelqu’un demande à rejoindre votre groupe, quand votre demande reçoit une réponse, quand un·e ami·e ajoute une photo et quand quelqu’un veut l’une des vôtres.",
     "unread": "{count} non lue | {count} non lue | {count} non lues",
     "history": "Plus tôt",
@@ -317,9 +333,12 @@
     }
   },
   "swipe": {
-    "intro": "Glissez à droite pour « Ça te va », à gauche pour « Ça ne te va pas », vers le haut pour « Je le veux ». Les boutons et les flèches du clavier fonctionnent aussi.",
+    "hint": "Glissez à droite si ça lui va, à gauche sinon, vers le haut si vous le voulez.",
+    "switchGroup": "Choisir un groupe",
+    "emptyTitle": "Rien à trier pour l’instant",
+    "doneTitle": "C’est tout trié !",
     "remaining": "{count} photo à passer en revue | {count} photo à passer en revue | {count} photos à passer en revue",
-    "done": "C’est tout ! Vous avez donné votre avis sur toutes les photos de ce groupe.",
+    "done": "Vous avez donné votre avis sur toutes les photos de ce groupe.",
     "seeAll": "Voir toutes les photos",
     "undo": "Annuler le dernier vote",
     "cardLabel": "Photo {index} sur {total} : {title}"

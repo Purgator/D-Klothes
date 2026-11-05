@@ -3,7 +3,9 @@ import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { RouteLocationRaw } from 'vue-router'
 import { useNotifications } from '@/composables/useNotifications'
-import PageTitle from '@/components/PageTitle.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import Illustration from '@/components/Illustration.vue'
+import TopBar from '@/components/TopBar.vue'
 import type { NotificationGroup } from '@/lib/notifications'
 import type { NotificationRow } from '@/types/database'
 
@@ -23,7 +25,7 @@ function target(n: NotificationGroup): RouteLocationRaw | null {
     case 'member_joined':
       return n.group_id ? { name: 'group', params: { groupId: n.group_id } } : null
     case 'item_added':
-      if (n.count > 1) return n.group_id ? { name: 'group-photos', params: { groupId: n.group_id } } : null
+      if (n.count > 1) return n.group_id ? { name: 'group', params: { groupId: n.group_id } } : null
       return n.group_id && n.item_id ? { name: 'item', params: { groupId: n.group_id, itemId: n.item_id } } : null
     case 'item_wanted':
       return n.group_id && n.item_id ? { name: 'item', params: { groupId: n.group_id, itemId: n.item_id } } : null
@@ -60,55 +62,58 @@ async function open(n: NotificationGroup) {
 </script>
 
 <template>
-  <section>
-    <PageTitle :title="t('notifications.title')" :back-to="{ name: 'home' }" :back-label="t('nav.home')">
-      <template #actions>
-        <button v-if="unread.length" type="button" class="btn-secondary" @click="notifications.markRead()">
-          {{ t('notifications.markAllRead') }}
+  <div class="screen-scroll">
+    <TopBar :title="t('notifications.title')">
+      <template #trailing>
+        <button v-if="unread.length" type="button" class="btn-ghost btn-sm" @click="notifications.markRead()">
+          <AppIcon name="check" size="16" /> {{ t('notifications.markAllRead') }}
         </button>
       </template>
-    </PageTitle>
+    </TopBar>
 
-    <p v-if="notifications.loading.value && !notifications.loaded.value" role="status" class="text-stone-500">{{ t('app.loading') }}</p>
-    <p v-else-if="!notifications.items.value.length" class="card text-sm text-stone-600">{{ t('notifications.empty') }}</p>
+    <div class="screen-body pb-8">
+      <div v-if="notifications.loading.value && !notifications.loaded.value" class="flex flex-col gap-2" role="status" :aria-label="t('app.loading')">
+        <div v-for="n in 4" :key="n" class="h-16 animate-pulse rounded-3xl bg-stone-200"></div>
+      </div>
+      <div v-else-if="!notifications.items.value.length" class="flex flex-col items-center gap-4 py-10 text-center">
+        <Illustration name="inbox" class="w-52 max-w-[55%]" />
+        <p class="text-lg font-bold">{{ t('notifications.emptyTitle') }}</p>
+        <p class="text-sm text-stone-600">{{ t('notifications.empty') }}</p>
+      </div>
 
-    <template v-else>
-      <section v-if="unread.length" class="mb-6" aria-labelledby="unread-title">
-        <h2 id="unread-title" class="mb-2 text-sm font-medium uppercase tracking-wide text-stone-500">
-          {{ t('notifications.unread', { count: unread.length }, unread.length) }}
-        </h2>
-        <ul class="flex flex-col gap-2">
-          <li v-for="n in unread" :key="n.id">
-            <component
-              :is="target(n) ? 'RouterLink' : 'div'"
-              :to="target(n) ?? undefined"
-              class="card flex items-start gap-3 border-brand-100 bg-brand-50 hover:border-brand-600"
-              @click="open(n)"
-            >
-              <span class="text-xl" aria-hidden="true">{{ icons[n.kind] }}</span>
-              <span class="flex-1">
-                <span class="block text-sm">{{ text(n) }}</span>
-                <span class="block text-xs text-stone-500">{{ d(new Date(n.created_at), 'long') }}</span>
-              </span>
-            </component>
-          </li>
-        </ul>
-      </section>
+      <template v-else>
+        <section v-if="unread.length" aria-labelledby="unread-title">
+          <h2 id="unread-title" class="section-title mt-2">{{ t('notifications.unread', { count: unread.length }, unread.length) }}</h2>
+          <ul class="list-group">
+            <li v-for="n in unread" :key="n.id">
+              <component :is="target(n) ? 'RouterLink' : 'div'" :to="target(n) ?? undefined" class="list-row bg-brand-50/60 hover:bg-brand-50" @click="open(n)">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm" aria-hidden="true">{{ icons[n.kind] }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-medium">{{ text(n) }}</span>
+                  <span class="block text-xs text-stone-500">{{ d(new Date(n.created_at), 'long') }}</span>
+                </span>
+                <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-brand-500" aria-hidden="true"></span>
+              </component>
+            </li>
+          </ul>
+        </section>
 
-      <section v-if="read.length" aria-labelledby="history-title">
-        <h2 id="history-title" class="mb-2 text-sm font-medium uppercase tracking-wide text-stone-500">{{ t('notifications.history') }}</h2>
-        <ul class="flex flex-col gap-2">
-          <li v-for="n in read" :key="n.id">
-            <component :is="target(n) ? 'RouterLink' : 'div'" :to="target(n) ?? undefined" class="card flex items-start gap-3 text-stone-600 hover:border-stone-400">
-              <span class="text-xl" aria-hidden="true">{{ icons[n.kind] }}</span>
-              <span class="flex-1">
-                <span class="block text-sm">{{ text(n) }}</span>
-                <span class="block text-xs text-stone-400">{{ d(new Date(n.created_at), 'long') }}</span>
-              </span>
-            </component>
-          </li>
-        </ul>
-      </section>
-    </template>
-  </section>
+        <section v-if="read.length" aria-labelledby="history-title">
+          <h2 id="history-title" class="section-title" :class="unread.length ? '' : 'mt-2'">{{ t('notifications.history') }}</h2>
+          <ul class="list-group">
+            <li v-for="n in read" :key="n.id">
+              <component :is="target(n) ? 'RouterLink' : 'div'" :to="target(n) ?? undefined" class="list-row text-stone-600 hover:bg-stone-50">
+                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-100 text-xl" aria-hidden="true">{{ icons[n.kind] }}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm">{{ text(n) }}</span>
+                  <span class="block text-xs text-stone-400">{{ d(new Date(n.created_at), 'long') }}</span>
+                </span>
+                <AppIcon v-if="target(n)" name="chevron-right" size="18" class="text-stone-300" />
+              </component>
+            </li>
+          </ul>
+        </section>
+      </template>
+    </div>
+  </div>
 </template>

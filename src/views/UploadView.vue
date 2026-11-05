@@ -7,8 +7,10 @@ import { isAcceptedInput, preparePhoto, type PreparedPhoto } from '@/lib/image'
 import { errorKey } from '@/lib/errors'
 import { retryOnNetworkError } from '@/lib/retry'
 import { useAuth } from '@/composables/useAuth'
+import { useGroupsOverview } from '@/composables/useGroupsOverview'
 import { haptic, useToast } from '@/composables/useToast'
-import PageTitle from '@/components/PageTitle.vue'
+import AppIcon from '@/components/AppIcon.vue'
+import TopBar from '@/components/TopBar.vue'
 import type { ClothingItem } from '@/types/database'
 
 const { t, d, n } = useI18n()
@@ -16,6 +18,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
 const toast = useToast()
+const overview = useGroupsOverview()
 
 const groupId = computed(() => String(route.params.groupId))
 const title = ref('')
@@ -103,8 +106,9 @@ async function submit() {
     }
     haptic([10, 30, 10])
     toast.show(t('toast.photoPublished'), { emoji: '📸' })
-    // The group page hides the uploader's own photos, so land on the collection instead.
-    await router.push({ name: 'group-photos', params: { groupId: groupId.value } })
+    void overview.load()
+    // The review deck hides the uploader's own photos, so land on the collection instead.
+    await router.replace({ name: 'group', params: { groupId: groupId.value } })
   } catch (err) {
     error.value = errorKey(err)
   } finally {
@@ -117,51 +121,64 @@ onUnmounted(revokePreview)
 </script>
 
 <template>
-  <section>
-    <PageTitle :title="t('upload.title')" :back-to="{ name: 'group', params: { groupId } }" :back-label="t('app.back')" />
-    <p v-if="allowed === false" class="alert-warning" role="alert">{{ t('errors.upload_not_allowed') }}</p>
-    <form v-else class="card flex flex-col gap-4" novalidate @submit.prevent="submit">
-      <div>
-        <label for="photo" class="label">{{ t('upload.choose') }}</label>
+  <div class="screen-scroll">
+    <TopBar :title="t('upload.title')" :back="{ name: 'group', params: { groupId } }" />
+    <div class="screen-body pb-8 pt-2">
+      <p v-if="allowed === false" class="alert-warning" role="alert">{{ t('errors.upload_not_allowed') }}</p>
+      <form v-else class="flex flex-col gap-4" novalidate @submit.prevent="submit">
         <input
           id="photo"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-          class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-brand-700 file:px-4 file:py-2 file:text-white"
+          class="sr-only"
           :disabled="preparing || uploading"
           @change="onFile"
         />
-        <p class="help">{{ t('upload.privacyNotice') }}</p>
-      </div>
 
-      <div v-if="step" role="status" aria-live="polite" class="flex flex-col gap-2 rounded-lg border border-brand-100 bg-brand-50 p-3">
-        <div class="flex items-center gap-2 text-sm text-brand-800">
-          <span class="h-4 w-4 animate-spin rounded-full border-2 border-brand-700 border-t-transparent" aria-hidden="true"></span>
-          <span>{{ t(`upload.step.${step}`) }}</span>
-          <span class="ml-auto text-xs text-brand-700">{{ t('upload.stepOf', { current: stepIndex + 1, total: STEPS.length }) }}</span>
+        <!-- Picker: a big tap target before a photo is chosen, the preview afterwards -->
+        <label
+          v-if="!previewUrl"
+          for="photo"
+          class="flex aspect-[4/5] max-h-[55vh] cursor-pointer flex-col items-center justify-center gap-3 rounded-4xl border-2 border-dashed border-brand-300 bg-brand-50 text-brand-800 transition hover:bg-brand-100 active:scale-[0.99]"
+        >
+          <span class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white text-brand-600 shadow-float"><AppIcon name="camera" size="30" /></span>
+          <span class="text-base font-semibold">{{ t('upload.choose') }}</span>
+          <span class="px-6 text-center text-xs text-brand-700/80">{{ t('upload.chooseHint') }}</span>
+        </label>
+        <div v-else class="relative overflow-hidden rounded-4xl bg-stone-200 shadow-card">
+          <img :src="previewUrl" :alt="t('upload.previewAlt')" class="max-h-[55vh] w-full object-contain" />
+          <label for="photo" class="btn-secondary btn-sm absolute right-3 top-3 cursor-pointer shadow"><AppIcon name="refresh" size="16" /> {{ t('upload.changePhoto') }}</label>
+          <p v-if="prepared" class="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-xs text-white">
+            {{ t('upload.ready', { size: `${n(prepared.blob.size / 1024 / 1024, { maximumFractionDigits: 2 })} MiB`, width: prepared.width, height: prepared.height }) }}
+          </p>
         </div>
-        <div class="h-2 overflow-hidden rounded-full bg-white" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
-          <div class="h-full rounded-full bg-brand-700 transition-all duration-500" :style="{ width: `${progressPercent}%` }"></div>
+
+        <div v-if="step" role="status" aria-live="polite" class="flex flex-col gap-2 rounded-2xl border border-brand-100 bg-brand-50 p-3">
+          <div class="flex items-center gap-2 text-sm text-brand-800">
+            <span class="h-4 w-4 animate-spin rounded-full border-2 border-brand-700 border-t-transparent" aria-hidden="true"></span>
+            <span>{{ t(`upload.step.${step}`) }}</span>
+            <span class="ml-auto text-xs text-brand-700">{{ t('upload.stepOf', { current: stepIndex + 1, total: STEPS.length }) }}</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded-full bg-white" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
+            <div class="h-full rounded-full bg-brand-600 transition-all duration-500" :style="{ width: `${progressPercent}%` }"></div>
+          </div>
         </div>
-      </div>
-      <div v-if="previewUrl && prepared" class="flex flex-col gap-2">
-        <img :src="previewUrl" :alt="t('upload.previewAlt')" class="max-h-96 w-full rounded-lg object-contain bg-stone-100" />
-        <p class="text-xs text-stone-500">
-          {{ t('upload.ready', { size: `${n(prepared.blob.size / 1024 / 1024, { maximumFractionDigits: 2 })} MiB`, width: prepared.width, height: prepared.height }) }}
-        </p>
-      </div>
 
-      <div>
-        <label for="title" class="label">{{ t('upload.itemTitle') }}</label>
-        <input id="title" v-model="title" type="text" maxlength="80" class="input" :placeholder="t('upload.itemTitlePlaceholder')" />
-      </div>
+        <div class="card">
+          <label for="title" class="label">{{ t('upload.itemTitle') }}</label>
+          <input id="title" v-model="title" type="text" maxlength="80" class="input" :placeholder="t('upload.itemTitlePlaceholder')" />
+        </div>
 
-      <p class="alert-info">{{ t('upload.retentionNotice', { date: retentionDate }) }}</p>
-      <p v-if="error" class="alert-error" role="alert">{{ t(error) }}</p>
+        <ul class="flex flex-col gap-2 text-xs text-stone-600">
+          <li class="flex gap-2"><AppIcon name="shield" size="16" class="mt-0.5 shrink-0 text-brand-600" /> {{ t('upload.privacyNotice') }}</li>
+          <li class="flex gap-2"><AppIcon name="clock" size="16" class="mt-0.5 shrink-0 text-brand-600" /> {{ t('upload.retentionNotice', { date: retentionDate }) }}</li>
+        </ul>
+        <p v-if="error" class="alert-error" role="alert">{{ t(error) }}</p>
 
-      <button type="submit" class="btn-primary self-start" :disabled="!prepared || uploading || preparing">
-        {{ uploading ? t('upload.uploading') : t('upload.submit') }}
-      </button>
-    </form>
-  </section>
+        <button type="submit" class="btn-primary" :disabled="!prepared || uploading || preparing">
+          <AppIcon name="send" size="20" /> {{ uploading ? t('upload.uploading') : t('upload.submit') }}
+        </button>
+      </form>
+    </div>
+  </div>
 </template>

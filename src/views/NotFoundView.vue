@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import Illustration from '@/components/Illustration.vue'
 
 const { t } = useI18n()
 </script>
 
 <template>
-  <section class="mx-auto mt-10 max-w-md text-center">
-    <h1 class="mb-2 text-2xl font-semibold">{{ t('app.notFoundTitle') }}</h1>
-    <p class="mb-4 text-stone-600">{{ t('app.notFoundBody') }}</p>
+  <div class="screen-fixed items-center justify-center px-6 text-center">
+    <Illustration name="lost" class="w-56 max-w-[60%]" />
+    <h1 class="mt-4 text-2xl font-bold">{{ t('app.notFoundTitle') }}</h1>
+    <p class="mt-1 mb-5 text-stone-600">{{ t('app.notFoundBody') }}</p>
     <RouterLink :to="{ name: 'home' }" class="btn-primary">{{ t('app.goHome') }}</RouterLink>
-  </section>
+  </div>
 </template>
