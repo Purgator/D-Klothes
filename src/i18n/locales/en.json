@@ -19,6 +19,9 @@
     "notFoundTitle": "Page not found",
     "notFoundBody": "This page does not exist or has moved.",
     "goHome": "Back to home",
+    "exitHint": "Tap back again to exit",
+    "updated": "App updated to the latest version",
+    "refresh": "Refresh",
     "share": "Share the app"
   },
   "toast": {
@@ -188,7 +191,29 @@
     "interested": "Who wants it",
     "photoAlt": "Clothing photo: {title}",
     "photoAltUntitled": "Untitled clothing photo",
-    "added": "Added on {date}"
+    "added": "Added on {date}",
+    "share": "Share the photo",
+    "shareDownloaded": "Sharing files is not available here, so the photo was saved to your device."
+  },
+  "gallery": {
+    "filterAll": "All",
+    "filterToReview": "To review",
+    "filterMine": "Mine",
+    "filterReviewed": "Reviewed",
+    "sort": "Sort",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortKeep": "Most “Keep”",
+    "sortLetGo": "Most “Let go”",
+    "sortWant": "Most wanted",
+    "sortTitle": "Title A–Z",
+    "noMatch": "No photo matches this filter."
+  },
+  "share": {
+    "title": "Add a received photo",
+    "body": "Choose the group this photo goes to.",
+    "nothing": "No photo arrived. Share a picture to D-Klothes from your gallery or another app to add it here.",
+    "noGroup": "You cannot add photos to any of your groups yet."
   },
   "settings": {
     "title": "Group settings",

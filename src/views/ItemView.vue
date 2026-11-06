@@ -7,6 +7,8 @@ import { errorKey } from '@/lib/errors'
 import { isNoticeDue } from '@/lib/retention'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupFeed } from '@/composables/useGroupFeed'
+import { useToast } from '@/composables/useToast'
+import { sharePhoto } from '@/lib/sharePhoto'
 import { VOTE_EMOJI } from '@/lib/votes'
 import AppIcon from '@/components/AppIcon.vue'
 import PhotoImage from '@/components/PhotoImage.vue'
@@ -17,6 +19,7 @@ const { t, d } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuth()
+const toast = useToast()
 
 const groupId = computed(() => String(route.params.groupId))
 const itemId = computed(() => String(route.params.itemId))
@@ -63,6 +66,16 @@ async function saveTitle() {
     saving.value = false
   }
 }
+const sharing = ref(false)
+async function share() {
+  if (!item.value || sharing.value) return
+  sharing.value = true
+  const outcome = await sharePhoto(item.value.storage_path, item.value.title)
+  sharing.value = false
+  if (outcome === 'downloaded') toast.show(t('item.shareDownloaded'), { tone: 'info', emoji: '💾' })
+  else if (outcome === 'failed') toast.show(t('errors.unknown'), { tone: 'error' })
+}
+
 async function remove() {
   deleting.value = true
   error.value = null
@@ -78,7 +91,13 @@ async function remove() {
 
 <template>
   <div class="screen-scroll relative bg-stone-100">
-    <TopBar transparent light :back="{ name: 'group', params: { groupId } }" />
+    <TopBar transparent light :back="{ name: 'group', params: { groupId } }">
+      <template #trailing>
+        <button v-if="item" type="button" class="btn-icon bg-black/30 text-white hover:bg-black/40" :disabled="sharing" :aria-label="t('item.share')" :title="t('item.share')" @click="share">
+          <AppIcon name="share" />
+        </button>
+      </template>
+    </TopBar>
 
     <div v-if="feed.loading.value" class="aspect-[4/5] max-h-[65vh] w-full animate-pulse bg-stone-300" role="status" :aria-label="t('app.loading')"></div>
     <div v-else-if="!item" class="screen-body pt-20"><p class="alert-error" role="alert">{{ t('errors.not_found') }}</p></div>

@@ -60,7 +60,8 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         // Manual registration from main.ts keeps index.html free of inline scripts (CSP).
         injectRegister: null,
-        registerType: 'autoUpdate',
+        // New versions are applied by src/lib/appUpdate.ts at a quiet moment, not mid-swipe.
+        registerType: 'prompt',
         includeAssets: ['icons/icon.svg'],
         manifest: {
           name: 'D-Klothes',
@@ -76,10 +77,19 @@ export default defineConfig(({ mode }) => {
             { src: `${base}icons/icon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
             { src: `${base}icons/icon-maskable.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
           ],
+          // Other apps can share a photo into D-Klothes; public/share-target-sw.js receives it.
+          share_target: {
+            action: `${base}share-target`,
+            method: 'POST',
+            enctype: 'multipart/form-data',
+            params: { files: [{ name: 'photo', accept: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'] }] },
+          },
         },
         workbox: {
           // App shell only: precache the build output, never cache API responses, votes or photos.
           globPatterns: ['**/*.{js,css,html,svg,webmanifest}'],
+          globIgnores: ['share-target-sw.js'],
+          importScripts: ['share-target-sw.js'],
           runtimeCaching: [],
           navigateFallback: `${base}index.html`,
           navigateFallbackDenylist: [/\/auth\/v1\//, /\/storage\/v1\//, /\/rest\/v1\//, /\/functions\/v1\//],

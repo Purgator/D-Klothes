@@ -19,6 +19,9 @@
     "notFoundTitle": "Page introuvable",
     "notFoundBody": "Cette page n’existe pas ou a été déplacée.",
     "goHome": "Retour à l’accueil",
+    "exitHint": "Appuyez encore sur Retour pour quitter",
+    "updated": "Application mise à jour",
+    "refresh": "Actualiser",
     "share": "Partager l’app"
   },
   "toast": {
@@ -188,7 +191,29 @@
     "interested": "Qui le veut",
     "photoAlt": "Photo de vêtement : {title}",
     "photoAltUntitled": "Photo de vêtement sans titre",
-    "added": "Ajoutée le {date}"
+    "added": "Ajoutée le {date}",
+    "share": "Partager la photo",
+    "shareDownloaded": "Le partage de fichiers n’est pas disponible ici : la photo a été enregistrée sur votre appareil."
+  },
+  "gallery": {
+    "filterAll": "Toutes",
+    "filterToReview": "À trier",
+    "filterMine": "Les miennes",
+    "filterReviewed": "Triées",
+    "sort": "Trier",
+    "sortNewest": "Plus récentes d’abord",
+    "sortOldest": "Plus anciennes d’abord",
+    "sortKeep": "Plus de « Ça te va »",
+    "sortLetGo": "Plus de « Ça ne te va pas »",
+    "sortWant": "Les plus voulues",
+    "sortTitle": "Titre A–Z",
+    "noMatch": "Aucune photo ne correspond à ce filtre."
+  },
+  "share": {
+    "title": "Ajouter une photo reçue",
+    "body": "Choisissez le groupe où ajouter cette photo.",
+    "nothing": "Aucune photo n’est arrivée. Partagez une image vers D-Klothes depuis votre galerie ou une autre application pour l’ajouter ici.",
+    "noGroup": "Vous ne pouvez encore ajouter de photo dans aucun de vos groupes."
   },
   "settings": {
     "title": "Paramètres du groupe",
