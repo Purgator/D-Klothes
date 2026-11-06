@@ -56,6 +56,8 @@ export const router = createRouter({
       meta: { auth: true, layout: 'stack' },
     },
     { path: '/account', name: 'account', component: () => import('@/views/AccountView.vue'), meta: { auth: true, layout: 'tabs' } },
+    // Where the service worker sends a photo shared from another app (see public/share-target-sw.js).
+    { path: '/share', name: 'share-target', component: () => import('@/views/ShareTargetView.vue'), meta: { auth: true, layout: 'stack' } },
     {
       path: '/notifications',
       name: 'notifications',

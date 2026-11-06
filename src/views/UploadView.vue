@@ -9,6 +9,7 @@ import { retryOnNetworkError } from '@/lib/retry'
 import { useAuth } from '@/composables/useAuth'
 import { useGroupsOverview } from '@/composables/useGroupsOverview'
 import { haptic, useToast } from '@/composables/useToast'
+import { takeSharedPhoto } from '@/lib/sharedPhoto'
 import AppIcon from '@/components/AppIcon.vue'
 import TopBar from '@/components/TopBar.vue'
 import type { ClothingItem } from '@/types/database'
@@ -38,6 +39,9 @@ const progressPercent = computed(() => Math.round(((stepIndex.value + 1) / (STEP
 // The server refuses uploads the group does not allow; this check only explains it earlier.
 const allowed = ref<boolean | null>(null)
 onMounted(async () => {
+  // A photo shared from another app arrives already chosen.
+  const shared = takeSharedPhoto()
+  if (shared) void takeFile(shared)
   const { data } = await supabase.rpc('can_upload_to_group', { p_group_id: groupId.value })
   allowed.value = data === true
 })
@@ -53,9 +57,12 @@ function revokePreview() {
   previewUrl.value = null
 }
 
-async function onFile(event: Event) {
+function onFile(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
+  if (file) void takeFile(file)
+}
+
+async function takeFile(file: File) {
   error.value = null
   prepared.value = null
   revokePreview()

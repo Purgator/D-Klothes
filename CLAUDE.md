@@ -58,5 +58,6 @@ resources drift apart.
 - Individual Keep / Let go choices are never shown to anyone. Only the uploader sees who
   chose "I want this".
 - No analytics, no tracking, no caching of private data in the browser (the service worker
-  precaches the app shell only).
+  precaches the app shell only; the one exception is a photo shared into the app from another
+  app, parked by the share-target handler and deleted the moment the app collects it).
 - French is the default language; every user-facing string lives in both locale files.

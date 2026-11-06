@@ -13,7 +13,7 @@ Use D-Klothes as the display name and DKlothes for programmatic identifiers. The
 - Styling: Tailwind CSS.
 - Backend: Supabase Auth, PostgreSQL, private Storage, and Realtime.
 - Hosting is a deployment decision. Check current terms, limits, data region, and costs before choosing a provider. Do not promise a free deployment.
-- Use a service worker only for the installable app shell in the MVP. Do not cache private API responses, votes, or photos.
+- Use a service worker only for the installable app shell in the MVP. Do not cache private API responses, votes, or photos. The only transient exception is the Web Share Target hand-off: a photo another app shares into D-Klothes is parked in a dedicated cache by the service worker and deleted as soon as the app collects it.
 
 Do not add a state-management library until shared state requires one. Keep the initial app structure small and follow the structure the scaffold creates.
 
