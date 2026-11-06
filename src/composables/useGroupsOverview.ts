@@ -109,12 +109,13 @@ export function useGroupsOverview() {
   const toReviewTotal = computed(() => groups.value.reduce((sum, g) => sum + g.toReview, 0))
   const attentionTotal = computed(() => groups.value.reduce((sum, g) => sum + g.pendingRequests, 0) + notices.value.length)
 
-  /** The group shown on the review deck: the remembered one when still available, else the first with work to do. */
-  const currentGroup = computed<GroupOverview | null>(() => {
-    const stored = groups.value.find((g) => g.id === storedGroupId.value)
-    return stored ?? groups.value.find((g) => g.toReview > 0) ?? groups.value[0] ?? null
-  })
+  /**
+   * The group the review deck is narrowed to, or null for every group at once (the default,
+   * and the fallback when the remembered group is no longer available).
+   */
+  const currentGroup = computed<GroupOverview | null>(() => groups.value.find((g) => g.id === storedGroupId.value) ?? null)
 
+  /** Narrow the deck to one group, or null to review every group. */
   function selectGroup(id: string | null) {
     storedGroupId.value = id
     try {

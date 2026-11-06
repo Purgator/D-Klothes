@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
-import { useGroupFeed } from '@/composables/useGroupFeed'
+import { useReviewQueue } from '@/composables/useReviewQueue'
 import { haptic, useToast } from '@/composables/useToast'
 import { errorKey } from '@/lib/errors'
 import { VOTE_EMOJI } from '@/lib/votes'
@@ -11,7 +11,8 @@ import Illustration from '@/components/Illustration.vue'
 import PhotoImage from '@/components/PhotoImage.vue'
 import type { ClothingItem, VoteType } from '@/types/database'
 
-const props = defineProps<{ groupId: string }>()
+// `groupId` null reviews the photos of every group the caller belongs to.
+const props = defineProps<{ groupId: string | null }>()
 const emit = defineEmits<{ reviewed: [groupId: string, delta: number] }>()
 
 const { t, d } = useI18n()
@@ -19,8 +20,8 @@ const auth = useAuth()
 const toast = useToast()
 
 const userId = computed(() => auth.user.value?.id ?? null)
-const feed = useGroupFeed(toRef(props, 'groupId'), userId)
-defineExpose({ feed })
+const feed = useReviewQueue(toRef(props, 'groupId'), userId)
+const allGroups = computed(() => props.groupId === null)
 
 // Items the caller has not voted on yet, oldest first, excluding their own uploads.
 // Locally decided ids are hidden immediately so the stack advances before the refetch lands.
@@ -107,7 +108,7 @@ async function decide(vote: VoteType) {
   dy.value = 0
   try {
     await feed.vote(item.id, vote)
-    emit('reviewed', props.groupId, -1)
+    emit('reviewed', item.group_id, -1)
     if (queue.value.length === 0) {
       haptic([20, 60, 20, 60, 40])
       toast.show(t('toast.allReviewed'), { emoji: '🎉', durationMs: 4000 })
@@ -125,7 +126,7 @@ async function undo() {
   try {
     await feed.vote(item.id, null, { allowUndo: true })
     decided.value = new Set([...decided.value].filter((id) => id !== item.id))
-    emit('reviewed', props.groupId, 1)
+    emit('reviewed', item.group_id, 1)
     toast.show(t('toast.voteRemoved'), { emoji: '↩️', tone: 'info' })
   } catch (err) {
     error.value = errorKey(err)
@@ -175,14 +176,15 @@ const tintStyles: Record<VoteType, string> = {
       <p v-if="feed.error.value" class="alert-error mb-2" role="alert">{{ t(feed.error.value) }}</p>
       <p v-if="error" class="alert-error mb-2" role="alert">{{ t(error) }}</p>
 
-      <!-- Nothing in the group yet -->
+      <!-- Nothing to review yet -->
       <div v-if="!feed.items.value.length" class="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
         <Illustration name="wardrobe" class="w-56 max-w-[60%]" />
         <div class="space-y-1">
           <p class="text-lg font-bold">{{ t('swipe.emptyTitle') }}</p>
-          <p class="text-sm text-stone-600">{{ feed.canUpload.value ? t('group.emptyFeed') : t('group.emptyFeedOwnerOnly') }}</p>
+          <p class="text-sm text-stone-600">{{ allGroups ? t('swipe.emptyAll') : feed.canUpload.value ? t('group.emptyFeed') : t('group.emptyFeedOwnerOnly') }}</p>
         </div>
-        <RouterLink v-if="feed.canUpload.value" :to="{ name: 'upload', params: { groupId } }" class="btn-primary">
+        <RouterLink v-if="allGroups" :to="{ name: 'groups' }" class="btn-primary"><AppIcon name="users" size="20" /> {{ t('swipe.seeGroups') }}</RouterLink>
+        <RouterLink v-else-if="feed.canUpload.value && groupId" :to="{ name: 'upload', params: { groupId } }" class="btn-primary">
           <AppIcon name="camera" size="20" /> {{ t('group.addPhoto') }}
         </RouterLink>
       </div>
@@ -192,10 +194,11 @@ const tintStyles: Record<VoteType, string> = {
         <Illustration name="done" class="w-56 max-w-[60%]" />
         <div class="space-y-1">
           <p class="text-lg font-bold">{{ t('swipe.doneTitle') }}</p>
-          <p class="text-sm text-stone-600">{{ t('swipe.done') }}</p>
+          <p class="text-sm text-stone-600">{{ allGroups ? t('swipe.doneAll') : t('swipe.done') }}</p>
         </div>
         <div class="flex flex-wrap justify-center gap-2">
-          <RouterLink :to="{ name: 'group', params: { groupId } }" class="btn-primary"><AppIcon name="image" size="20" /> {{ t('swipe.seeAll') }}</RouterLink>
+          <RouterLink v-if="allGroups" :to="{ name: 'groups' }" class="btn-primary"><AppIcon name="users" size="20" /> {{ t('swipe.seeGroups') }}</RouterLink>
+          <RouterLink v-else-if="groupId" :to="{ name: 'group', params: { groupId } }" class="btn-primary"><AppIcon name="image" size="20" /> {{ t('swipe.seeAll') }}</RouterLink>
           <button v-if="lastVoted" type="button" class="btn-secondary" @click="undo"><AppIcon name="undo" size="20" /> {{ t('swipe.undo') }}</button>
         </div>
       </div>
@@ -229,9 +232,12 @@ const tintStyles: Record<VoteType, string> = {
             <PhotoImage :path="current.storage_path" :alt="current.title || t('item.photoAltUntitled')" plain sizes-class="h-full pointer-events-none" />
             <div v-if="direction" class="pointer-events-none absolute inset-0 transition-opacity" :class="tintStyles[direction]" :style="{ opacity: String(intensity * 0.8) }" aria-hidden="true"></div>
             <div class="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-5 pb-5 pt-16 text-white">
+              <p v-if="allGroups" class="mb-1.5 inline-flex max-w-full items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold backdrop-blur">
+                <AppIcon name="users" size="14" /> <span class="truncate">{{ feed.groups.value.get(current.group_id)?.name ?? '?' }}</span>
+              </p>
               <p class="text-xl font-bold leading-tight drop-shadow">{{ current.title || t('home.untitled') }}</p>
               <p class="mt-1 text-sm text-white/85">
-                {{ t('group.uploadedBy', { name: feed.memberNames.value.get(current.uploader_id) ?? '?' }) }} · {{ d(new Date(current.created_at), 'short') }}
+                {{ t('group.uploadedBy', { name: feed.uploaderNames.value.get(current.uploader_id) ?? '?' }) }} · {{ d(new Date(current.created_at), 'short') }}
               </p>
             </div>
             <span

@@ -335,11 +335,16 @@
   "swipe": {
     "hint": "Swipe right to keep, left to let go, up for I want this.",
     "switchGroup": "Choose a group",
+    "allGroups": "All groups",
+    "allGroupsHint": "Every photo waiting for your advice, in one deck",
     "emptyTitle": "Nothing to review yet",
+    "emptyAll": "None of your groups has photos yet. Add some, or wait for your friends to.",
     "doneTitle": "All caught up!",
     "remaining": "{count} photo left to review | {count} photo left to review | {count} photos left to review",
     "done": "You have given your advice on every photo in this group.",
+    "doneAll": "You have given your advice on every photo in all your groups.",
     "seeAll": "See all photos",
+    "seeGroups": "See my groups",
     "undo": "Undo last vote",
     "cardLabel": "Photo {index} of {total}: {title}"
   },

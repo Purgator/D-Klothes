@@ -18,7 +18,9 @@ const overview = useGroupsOverview()
 const baseUrl = import.meta.env.BASE_URL
 
 const pickerOpen = ref(false)
+// Null means the deck covers every group.
 const group = computed(() => overview.currentGroup.value)
+const hasGroups = computed(() => overview.groups.value.length > 0)
 
 // `?group=` (older links, notifications) selects a group, then leaves the address clean.
 watch(
@@ -33,7 +35,7 @@ watch(
 )
 onMounted(() => void overview.load())
 
-function pick(id: string) {
+function pick(id: string | null) {
   overview.selectGroup(id)
   pickerOpen.value = false
 }
@@ -47,14 +49,14 @@ function pick(id: string) {
       </template>
       <template #title>
         <button
-          v-if="group"
+          v-if="hasGroups"
           type="button"
           class="mx-auto flex max-w-full items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-base font-bold shadow-sm ring-1 ring-stone-900/5 active:scale-95"
           :aria-label="t('swipe.switchGroup')"
           aria-haspopup="dialog"
           @click="pickerOpen = true"
         >
-          <span class="truncate">{{ group.name }}</span>
+          <span class="truncate">{{ group ? group.name : t('swipe.allGroups') }}</span>
           <AppIcon name="chevron-down" size="18" class="text-stone-500" />
         </button>
         <span v-else class="block text-center">{{ t('app.name') }}</span>
@@ -74,7 +76,7 @@ function pick(id: string) {
       <div v-if="!overview.loaded.value" class="min-h-0 flex-1 animate-pulse rounded-4xl bg-stone-200" role="status" :aria-label="t('app.loading')"></div>
 
       <!-- No group yet: the app starts here -->
-      <div v-else-if="!group" class="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 text-center">
+      <div v-else-if="!hasGroups" class="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 text-center">
         <Illustration name="wardrobe" class="w-60 max-w-[65%]" />
         <div class="space-y-1">
           <h2 class="text-xl font-bold">{{ t('home.welcomeTitle') }}</h2>
@@ -86,11 +88,22 @@ function pick(id: string) {
         </div>
       </div>
 
-      <SwipeDeck v-else :key="group.id" :group-id="group.id" @reviewed="overview.noteReviewed" />
+      <SwipeDeck v-else :key="group?.id ?? 'all'" :group-id="group?.id ?? null" @reviewed="overview.noteReviewed" />
     </div>
 
     <BottomSheet :open="pickerOpen" :title="t('swipe.switchGroup')" @close="pickerOpen = false">
       <ul class="list-group">
+        <li>
+          <button type="button" class="list-row" :aria-current="group ? undefined : 'true'" @click="pick(null)">
+            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white"><AppIcon name="cards" size="20" /></span>
+            <span class="min-w-0 flex-1">
+              <span class="block truncate font-medium">{{ t('swipe.allGroups') }}</span>
+              <span class="block text-xs text-stone-500">{{ t('swipe.allGroupsHint') }}</span>
+            </span>
+            <span v-if="overview.toReviewTotal.value" class="pill bg-brand-100 text-brand-800">{{ t('group.toReview', { count: overview.toReviewTotal.value }, overview.toReviewTotal.value) }}</span>
+            <AppIcon v-if="!group" name="check" size="20" class="text-brand-600" />
+          </button>
+        </li>
         <li v-for="g in overview.groups.value" :key="g.id">
           <button type="button" class="list-row" :aria-current="g.id === group?.id ? 'true' : undefined" @click="pick(g.id)">
             <GroupAvatar :name="g.name" size="sm" />

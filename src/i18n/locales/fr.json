@@ -335,11 +335,16 @@
   "swipe": {
     "hint": "Glissez à droite si ça lui va, à gauche sinon, vers le haut si vous le voulez.",
     "switchGroup": "Choisir un groupe",
+    "allGroups": "Tous les groupes",
+    "allGroupsHint": "Toutes les photos qui attendent votre avis, en une seule pile",
     "emptyTitle": "Rien à trier pour l’instant",
+    "emptyAll": "Aucun de vos groupes n’a de photo pour l’instant. Ajoutez-en, ou attendez celles de vos amis.",
     "doneTitle": "C’est tout trié !",
     "remaining": "{count} photo à passer en revue | {count} photo à passer en revue | {count} photos à passer en revue",
     "done": "Vous avez donné votre avis sur toutes les photos de ce groupe.",
+    "doneAll": "Vous avez donné votre avis sur toutes les photos de tous vos groupes.",
     "seeAll": "Voir toutes les photos",
+    "seeGroups": "Voir mes groupes",
     "undo": "Annuler le dernier vote",
     "cardLabel": "Photo {index} sur {total} : {title}"
   },
