@@ -3,6 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { applyVoteChange, emptyCounts, indexCounts } from '@/lib/votes'
 import { errorKey } from '@/lib/errors'
+import { onAppResume } from '@/lib/appResume'
 import { VOTE_COOLDOWN_MS, voteCooldownRemaining } from '@/lib/votes'
 import type { ClothingItem, Group, GroupMember, Profile, VoteCounts, VoteType } from '@/types/database'
 
@@ -145,7 +146,10 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     },
     { immediate: true },
   )
+  // Realtime events sent while the app slept in the background are lost: catch up on return.
+  const stopResume = onAppResume(() => void load())
   onUnmounted(() => {
+    stopResume()
     clearTimeout(refetchTimer)
     unsubscribe()
   })

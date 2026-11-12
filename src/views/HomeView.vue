@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 import { useGroupsOverview } from '@/composables/useGroupsOverview'
 import { checkForUpdate } from '@/lib/appUpdate'
 import AppIcon from '@/components/AppIcon.vue'
@@ -16,17 +17,19 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const overview = useGroupsOverview()
+const auth = useAuth()
 
 const pickerOpen = ref(false)
 
-// Pull everything fresh: the overview, the deck (remounted) and a look for a new app version.
+// Pull everything fresh: the profile (plan, preferences), the overview, the deck (remounted)
+// and a look for a new app version.
 const refreshing = ref(false)
 const deckKey = ref(0)
 async function refresh() {
   if (refreshing.value) return
   refreshing.value = true
   deckKey.value++
-  await Promise.all([overview.load(), checkForUpdate(), new Promise((r) => setTimeout(r, 600))])
+  await Promise.all([auth.refreshProfile(), overview.load(), checkForUpdate(), new Promise((r) => setTimeout(r, 600))])
   refreshing.value = false
 }
 // Null means the deck covers every group.

@@ -2,6 +2,7 @@ import { computed, onUnmounted, ref, watch, type Ref } from 'vue'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { errorKey } from '@/lib/errors'
+import { onAppResume } from '@/lib/appResume'
 import { voteCooldownRemaining } from '@/lib/votes'
 import type { ClothingItem, Group, VoteType } from '@/types/database'
 
@@ -128,7 +129,10 @@ export function useReviewQueue(groupId: Ref<string | null>, userId: Ref<string |
     },
     { immediate: true },
   )
+  // Realtime events sent while the app slept in the background are lost: catch up on return.
+  const stopResume = onAppResume(() => void load())
   onUnmounted(() => {
+    stopResume()
     clearTimeout(refetchTimer)
     unsubscribe()
   })

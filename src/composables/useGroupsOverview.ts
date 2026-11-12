@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { errorKey } from '@/lib/errors'
+import { onAppResume } from '@/lib/appResume'
 import { useAuth } from '@/composables/useAuth'
 import type { ClothingItem, Group, MyMembershipRequest } from '@/types/database'
 
@@ -91,6 +92,7 @@ export function useGroupsOverview() {
 
   if (!watching) {
     watching = true
+    onAppResume(() => void load())
     watch(
       () => (auth.hasProfile.value ? auth.user.value?.id : null),
       (uid) => {

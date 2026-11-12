@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onAppResume } from '@/lib/appResume'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { FunctionError, invokeFunction, supabase } from '@/lib/supabase'
@@ -52,10 +53,14 @@ async function setKind(kind: NotificationKind, enabled: boolean) {
 const haptics = useHaptics()
 
 const entitlements = ref<Entitlements | null>(null)
-onMounted(async () => {
-  const { data } = await supabase.rpc('my_entitlements')
-  entitlements.value = data?.[0] ?? null
-})
+// The plan line mixes the entitlements (tier, limits) and the profile (tier note): both are
+// reread together, on opening the page and on returning to the app, so they cannot disagree.
+async function loadPlan() {
+  const [{ data }] = await Promise.all([supabase.rpc('my_entitlements'), auth.refreshProfile()])
+  if (data?.[0]) entitlements.value = data[0]
+}
+onMounted(loadPlan)
+onUnmounted(onAppResume(() => void loadPlan()))
 const exporting = ref(false)
 const exportError = ref<string | null>(null)
 async function exportData() {
