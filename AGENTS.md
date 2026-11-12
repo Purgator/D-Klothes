@@ -62,6 +62,7 @@ Define required fields, valid values, foreign-key deletion behavior, and uniquen
 ### Database and Storage security
 
 - Enable RLS on every exposed application table. Start with deny-by-default policies and grant only the operations required by each role.
+- Row-level security decides which rows; it does not protect columns. Grant the API roles only the columns each operation needs (a whitelist, starting from nothing) and serve private columns through restricted functions. A display name is chosen once at sign-up: clients cannot update it, and any future renaming goes through a dedicated server-side function.
 - Check both existing rows and proposed row values for writes. Test unauthenticated access, same-group access, cross-group access, pending applicants, and removed members.
 - Do not treat RLS as the only security control. Use authenticated sessions, input validation, least privilege, and secure server-side handling for privileged operations.
 - The Supabase anon key is expected to be present in the browser; the service-role key must never be sent to or bundled in client code.

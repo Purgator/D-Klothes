@@ -238,6 +238,12 @@ costs before relying on any plan; nothing here promises a free or compliant depl
 - RLS is deny-by-default. Client writes are limited to the own profile, own vote deletion, item
   title edits by the uploader, group rename by the owner, and member removal. Everything else
   goes through RPCs or Edge Functions.
+- Table and function privileges are a whitelist: the API roles hold only the columns and
+  functions the app uses (a title, a group name, a mute flag, a read mark), so a hand-written
+  request cannot rename an account, repoint a photo record or read someone else's plan note.
+- Known limits: with very few voters, totals can reveal who chose Keep or Let go; a member can
+  upload files to their own folder without registering them (they count against no quota and
+  are not cleaned up); an owner can transfer a group to a member without asking.
 - Realtime publishes only `group_feed_state`, a per-group version counter; clients refetch
   through RLS-protected queries.
 - Photos are read from the authenticated Storage endpoint (stable address, session token in a

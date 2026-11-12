@@ -53,7 +53,7 @@ select is((select count(*) from public.clothing_items), 1::bigint, 'a member see
 select is((select count(*) from public.profiles), 2::bigint, 'a member sees co-member profiles only');
 
 select tests.anon();
-select is((select count(*) from public.groups), 0::bigint, 'anon sees nothing');
+select throws_ok($$select count(*) from public.groups$$, '42501', null, 'anon cannot even query');
 
 -- ---------------------------------------------------------------------------
 -- Votes: one per member per item, changeable, private.

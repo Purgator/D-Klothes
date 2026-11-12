@@ -31,7 +31,7 @@ select is(public.can_upload_to_group((select id from t_closed)), false, 'a membe
 select tests.login('00000000-0000-0000-0000-000000000051');
 select is(public.can_upload_to_group((select id from t_closed)), true, 'the owner may always upload');
 select tests.anon();
-select is(public.can_upload_to_group((select id from t_open)), false, 'anon may never upload');
+select throws_ok($$select public.can_upload_to_group((select id from t_open))$$, '42501', null, 'anon may not even ask');
 
 -- Storage: the insert policy follows the option.
 select tests.login('00000000-0000-0000-0000-000000000052');

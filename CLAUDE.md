@@ -31,7 +31,12 @@ npm run db:smoke    # Edge Functions end to end, needs `supabase functions serve
 
 Schema changes always go in a new file under `supabase/migrations/` (never edit an applied
 migration), with a pgTAP assertion in `supabase/tests/` for every new authorization rule, and
-`npm run db:types` to refresh `src/types/database.gen.ts`. Re-read the authorization boundary
+`npm run db:types` to refresh `src/types/database.gen.ts`. The API roles (`anon`, `authenticated`) start with nothing on new tables and functions
+(`20261113000000_api_privileges.sql`): a migration grants exactly what its feature needs,
+column by column for writes, and revokes `execute` from `public` on every new function. A
+column a client should not read or write is left out of the grant and served by a security
+definer function instead; row-level security alone does not protect columns.
+Re-read the authorization boundary
 for anything touching auth, RLS, invitations, Storage, retention or deletion (see `AGENTS.md`).
 
 ## Releases

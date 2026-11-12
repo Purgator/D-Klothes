@@ -41,11 +41,14 @@ export function consumeRedirect(): string {
 }
 
 async function loadProfile(userId: string): Promise<void> {
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+  // The table only exposes names to clients; my_profile() returns the caller's whole row.
+  const { data, error } = await supabase.rpc('my_profile').maybeSingle()
   if (error) {
     console.error('profile load failed', error.message)
     return
   }
+  // A session change may have happened while the request was in flight.
+  if (data && data.id !== userId) return
   profile.value = data
 }
 
@@ -108,18 +111,11 @@ export function useAuth() {
     if (!uid) throw new Error('unauthenticated')
     // Insert, never upsert: the name screen must not be able to rename an existing account,
     // whatever made the app believe there was no profile (a race, a failed load).
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert({ id: uid, display_name: displayName.trim() })
-      .select()
-      .single()
-    if (error) {
-      if (error.code !== '23505') throw error
-      await loadProfile(uid)
-      if (!profile.value) throw error
-      return
-    }
-    profile.value = data
+    // The database refuses any later change of the name as well.
+    const { error } = await supabase.from('profiles').insert({ id: uid, display_name: displayName.trim() })
+    if (error && error.code !== '23505') throw error
+    await loadProfile(uid)
+    if (!profile.value) throw error ?? new Error('profile_not_created')
   }
 
   async function signOut(): Promise<void> {

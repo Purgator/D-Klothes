@@ -1,6 +1,6 @@
 -- pgTAP tests for account tiers: admin-only grants and server-enforced limits.
 begin;
-select plan(16);
+select plan(17);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -14,13 +14,15 @@ values
 
 -- Profiles are created by the users themselves: the tier they send is ignored.
 select tests.login('00000000-0000-0000-0000-000000000011');
-insert into public.profiles (id, display_name, tier) values ('00000000-0000-0000-0000-000000000011', 'Free', 'premium');
-select is((select tier from public.profiles where id = '00000000-0000-0000-0000-000000000011'), 'free'::public.account_tier,
+select throws_ok($$insert into public.profiles (id, display_name, tier) values ('00000000-0000-0000-0000-000000000011', 'Free', 'premium')$$, '42501', null,
   'a client cannot pick a tier at onboarding');
+insert into public.profiles (id, display_name) values ('00000000-0000-0000-0000-000000000011', 'Free');
+select is((select tier from public.my_profile()), 'free'::public.account_tier,
+  'a new profile starts on the free tier');
 select throws_ok($$update public.profiles set tier = 'premium' where id = '00000000-0000-0000-0000-000000000011'$$, '42501', null,
   'a client cannot upgrade their own tier');
-select lives_ok($$update public.profiles set display_name = 'Free user' where id = '00000000-0000-0000-0000-000000000011'$$,
-  'a client can still edit their display name');
+select throws_ok($$update public.profiles set display_name = 'Free user' where id = '00000000-0000-0000-0000-000000000011'$$, '42501', null,
+  'a client cannot rename themselves');
 select throws_ok($$select public.set_account_tier('free@test.local', 'premium')$$, '42501', null,
   'set_account_tier is refused for signed-in users');
 

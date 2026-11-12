@@ -10,7 +10,8 @@ serve(async (req) => {
 
   // Everything the user may read about themselves goes through their RLS-scoped client.
   const [profile, memberships, requests, votes, items] = await Promise.all([
-    db.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+    // The caller's own row with every column; the table itself only exposes names to clients.
+    db.rpc('my_profile').maybeSingle(),
     db.from('group_members').select('group_id, role, joined_at, groups(name)').eq('user_id', user.id),
     db.from('membership_requests').select('group_id, message, status, created_at, reviewed_at').eq('user_id', user.id),
     db.from('votes').select('item_id, vote, created_at, updated_at').eq('voter_id', user.id),

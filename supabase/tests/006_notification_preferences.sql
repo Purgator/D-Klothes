@@ -41,9 +41,9 @@ select lives_ok($$update public.group_members set muted = true where group_id = 
 select throws_ok($$update public.group_members set role = 'owner' where group_id = (select id from t_pg) and user_id = '00000000-0000-0000-0000-000000000063'$$,
   '42501', null, 'a member cannot change their role through the mute policy');
 update public.group_members set muted = true where group_id = (select id from t_pg) and user_id = '00000000-0000-0000-0000-000000000061';
+select tests.logout();
 select is((select muted from public.group_members where group_id = (select id from t_pg) and user_id = '00000000-0000-0000-0000-000000000061'), false,
   'a member cannot mute a group for someone else');
-select tests.logout();
 insert into public.clothing_items (id, group_id, uploader_id, storage_path)
 values ('60000000-0000-0000-0000-000000000002', (select id from t_pg), '00000000-0000-0000-0000-000000000061',
         (select id from t_pg) || '/00000000-0000-0000-0000-000000000061/p2.jpg');

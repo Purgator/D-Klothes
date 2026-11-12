@@ -496,6 +496,20 @@ export type Database = {
       item_group_id: { Args: { p_item_id: string }; Returns: string };
       item_uploader_id: { Args: { p_item_id: string }; Returns: string };
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number };
+      my_group_mute: { Args: { p_group_id: string }; Returns: boolean };
+      my_profile: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          created_at: string;
+          display_name: string;
+          id: string;
+          muted_kinds: Database["public"]["Enums"]["notification_kind"][];
+          tier: Database["public"]["Enums"]["account_tier"];
+          tier_granted_at: string | null;
+          tier_note: string | null;
+          updated_at: string;
+        }[];
+      };
       my_entitlements: {
         Args: Record<PropertyKey, never>;
         Returns: {

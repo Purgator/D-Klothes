@@ -7,7 +7,8 @@ import { onAppResume } from '@/lib/appResume'
 import { VOTE_COOLDOWN_MS, voteCooldownRemaining } from '@/lib/votes'
 import type { ClothingItem, Group, GroupMember, Profile, VoteCounts, VoteType } from '@/types/database'
 
-export interface MemberWithProfile extends GroupMember {
+// Without `muted`: who silenced a group is nobody else's business (see my_group_mute()).
+export interface MemberWithProfile extends Omit<GroupMember, 'muted'> {
   profile: Pick<Profile, 'id' | 'display_name'> | null
 }
 
@@ -36,7 +37,7 @@ export function useGroupFeed(groupId: Ref<string>, userId: Ref<string | null>) {
     try {
       const [g, m, i, c, v] = await Promise.all([
         supabase.from('groups').select('*').eq('id', groupId.value).maybeSingle(),
-        supabase.from('group_members').select('*, profile:profiles(id, display_name)').eq('group_id', groupId.value),
+        supabase.from('group_members').select('group_id, user_id, role, joined_at, profile:profiles(id, display_name)').eq('group_id', groupId.value),
         supabase.from('clothing_items').select('*').eq('group_id', groupId.value).order('created_at', { ascending: false }),
         supabase.rpc('group_vote_counts', { p_group_id: groupId.value }),
         userId.value

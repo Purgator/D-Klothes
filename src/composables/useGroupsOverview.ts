@@ -36,8 +36,11 @@ const storedGroupId = ref<string | null>(readCurrentGroup())
 async function fetchOverview(userId: string): Promise<void> {
   error.value = null
   try {
-    const [g, p, r, n, i, v] = await Promise.all([
-      supabase.from('groups').select('*, group_members(count)').order('created_at'),
+    const [g, m, p, r, n, i, v] = await Promise.all([
+      supabase.from('groups').select('*').order('created_at'),
+      // Rosters of my groups, counted here (an embedded count would need every column of the
+      // membership row, and the mute flag is private to each member).
+      supabase.from('group_members').select('group_id'),
       // Pending applications to the groups I own (RLS limits this to my groups).
       supabase.from('membership_requests').select('group_id').eq('status', 'pending'),
       supabase.rpc('my_membership_requests'),
@@ -45,8 +48,10 @@ async function fetchOverview(userId: string): Promise<void> {
       supabase.from('clothing_items').select('id, group_id, uploader_id'),
       supabase.from('votes').select('item_id').eq('voter_id', userId),
     ])
-    for (const res of [g, p, r, n, i, v]) if (res.error) throw res.error
+    for (const res of [g, m, p, r, n, i, v]) if (res.error) throw res.error
 
+    const membersByGroup = new Map<string, number>()
+    for (const row of m.data ?? []) membersByGroup.set(row.group_id, (membersByGroup.get(row.group_id) ?? 0) + 1)
     const pendingByGroup = new Map<string, number>()
     for (const row of p.data ?? []) pendingByGroup.set(row.group_id, (pendingByGroup.get(row.group_id) ?? 0) + 1)
     const voted = new Set((v.data ?? []).map((row) => row.item_id))
@@ -58,9 +63,9 @@ async function fetchOverview(userId: string): Promise<void> {
         toReviewByGroup.set(item.group_id, (toReviewByGroup.get(item.group_id) ?? 0) + 1)
       }
     }
-    groups.value = ((g.data ?? []) as unknown as (Group & { group_members: { count: number }[] })[]).map((row) => ({
+    groups.value = ((g.data ?? []) as Group[]).map((row) => ({
       ...row,
-      memberCount: row.group_members?.[0]?.count ?? 0,
+      memberCount: membersByGroup.get(row.id) ?? 0,
       photoCount: photosByGroup.get(row.id) ?? 0,
       toReview: toReviewByGroup.get(row.id) ?? 0,
       pendingRequests: row.owner_id === userId ? (pendingByGroup.get(row.id) ?? 0) : 0,

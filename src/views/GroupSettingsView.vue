@@ -73,13 +73,18 @@ const saveUploadPolicy = (value: boolean) =>
   })
 
 // --- Mute (any member, for themselves) -----------------------------------------------
-const muted = computed(() => feed.members.value.find((m) => m.user_id === userId.value)?.muted ?? false)
+const muted = ref(false)
+async function loadMuted() {
+  const { data } = await supabase.rpc('my_group_mute', { p_group_id: groupId.value })
+  muted.value = data === true
+}
+watch(groupId, loadMuted, { immediate: true })
 const setMuted = (value: boolean) =>
   run(async () => {
     if (!userId.value) return
     const { error: e } = await supabase.from('group_members').update({ muted: value }).eq('group_id', groupId.value).eq('user_id', userId.value)
     if (e) throw e
-    await feed.load()
+    await loadMuted()
     toast.show(value ? t('settings.mutedOn') : t('settings.mutedOff'), { emoji: value ? '🔕' : '🔔', tone: 'info' })
   })
 

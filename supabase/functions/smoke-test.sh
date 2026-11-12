@@ -64,7 +64,7 @@ MEMBER_TOK="$(create_user "member-$RUN_ID@smoke.local")"; MEMBER_ID="$(user_id "
 OTHER_TOK="$(create_user "other-$RUN_ID@smoke.local")";   OTHER_ID="$(user_id "$OTHER_TOK")"
 for pair in "$OWNER_TOK:Owner" "$MEMBER_TOK:Member" "$OTHER_TOK:Other"; do
   tok="${pair%%:*}"; name="${pair##*:}"
-  rest "$tok" profiles -X POST -d "{\"id\":\"$(user_id "$tok")\",\"display_name\":\"$name\"}" >/dev/null
+  rest "$tok" 'profiles?select=id' -X POST -d "{\"id\":\"$(user_id "$tok")\",\"display_name\":\"$name\"}" >/dev/null
 done
 check "profiles readable by their owner" "Owner" "$(rest "$OWNER_TOK" 'profiles?select=display_name' | json "[0]['display_name']")"
 
