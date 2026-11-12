@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
+import { tokenHashFromFragment } from '@/lib/authLink'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -12,7 +13,20 @@ const failed = ref(false)
 const baseUrl = import.meta.env.BASE_URL
 
 onMounted(async () => {
-  // supabase-js exchanges the PKCE code in the URL on initialisation; wait for the session.
+  // Links from the sign-in email carry a token hash in the fragment. Take it out of the
+  // address bar before anything else, then trade it for a session.
+  const tokenHash = tokenHashFromFragment(window.location.hash)
+  if (tokenHash) {
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+    await auth.whenReady()
+    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'email' })
+    // Opening the same link twice fails the second time; an existing session still counts.
+    if (error && !(await supabase.auth.getSession()).data.session) {
+      failed.value = true
+      return
+    }
+  }
+  // Older links come back with a PKCE code that supabase-js exchanges on initialisation.
   await auth.whenReady()
   const params = new URLSearchParams(window.location.search)
   if (params.get('error') || window.location.hash.includes('error=')) {
