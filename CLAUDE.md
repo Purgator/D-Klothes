@@ -57,7 +57,11 @@ resources drift apart.
 - A vote is advice. Nothing in the app disposes of, transfers or claims clothing.
 - Individual Keep / Let go choices are never shown to anyone. Only the uploader sees who
   chose "I want this".
-- No analytics, no tracking, no caching of private data in the browser (the service worker
+- No analytics, no tracking, no storing of private data in the browser (the service worker
   precaches the app shell only; the one exception is a photo shared into the app from another
   app, parked by the share-target handler and deleted the moment the app collects it).
+  Photos are the deliberate exception at HTTP level: they are immutable, uploaded with a long
+  max-age and read from a stable authenticated address, so the browser's own cache keeps them
+  and each device downloads a photo once. Rows (profile, groups, votes) are never cached:
+  they are refetched on the refresh button and when the app returns to the foreground.
 - French is the default language; every user-facing string lives in both locale files.

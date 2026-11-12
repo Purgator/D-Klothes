@@ -1,6 +1,8 @@
 import { computed, ref } from 'vue'
 import type { Session } from '@supabase/supabase-js'
 import { appUrl, supabase } from '@/lib/supabase'
+import { onAppResume } from '@/lib/appResume'
+import { clearPhotoCache } from '@/composables/usePhotoUrl'
 import type { Profile } from '@/types/database'
 
 // Module-level singletons: shared auth state without a state-management library.
@@ -51,7 +53,14 @@ async function applySession(next: Session | null): Promise<void> {
     if (profile.value?.id !== next.user.id) await loadProfile(next.user.id)
   } else {
     profile.value = null
+    clearPhotoCache()
   }
+}
+
+/** Reread the profile from the server (plan, notification preferences can change elsewhere). */
+async function refreshProfile(): Promise<void> {
+  const uid = session.value?.user?.id
+  if (uid) await loadProfile(uid)
 }
 
 export function useAuth() {
@@ -60,6 +69,8 @@ export function useAuth() {
       const { data } = await supabase.auth.getSession()
       await applySession(data.session)
       ready.value = true
+      // The profile is loaded once per sign-in; an app left open for days must not keep it forever.
+      onAppResume(() => void refreshProfile())
       supabase.auth.onAuthStateChange((event, next) => {
         // Supabase warns against awaiting inside the callback; defer the async work.
         void Promise.resolve().then(() => {
@@ -99,10 +110,6 @@ export function useAuth() {
   async function signOut(): Promise<void> {
     await supabase.auth.signOut()
     await applySession(null)
-  }
-
-  async function refreshProfile(): Promise<void> {
-    if (user.value) await loadProfile(user.value.id)
   }
 
   return {

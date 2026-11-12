@@ -99,8 +99,9 @@ add a migration that redefines `public.tier_limit()` and update this table.
 ## Privacy
 
 Photos and votes are visible only to approved members of the same group, enforced by database
-policies and private storage, not just by the interface. There is no analytics, no tracking,
-and no private data cached in the browser. See [AGENTS.md](AGENTS.md) for the full product and
+policies and private storage, not just by the interface. There is no analytics and no tracking.
+Names, groups and votes are never stored in the browser; photos already viewed stay in the
+browser's own HTTP cache so each device downloads them only once. See [AGENTS.md](AGENTS.md) for the full product and
 security guide, including what still has to be verified before a public launch (privacy notice,
 lawful basis, hosting terms).
 
@@ -112,7 +113,7 @@ PostgreSQL with row-level security, private Storage, Realtime and Edge Functions
 | Path | Purpose |
 | --- | --- |
 | `src/views/` | One component per route (sign-in, onboarding, groups, feed, upload, item, settings, invite, account) |
-| `src/composables/` | Auth state, group feed with Realtime refetch, signed photo URLs |
+| `src/composables/` | Auth state, group feed with Realtime refetch, cached photo loading |
 | `src/lib/` | Pure helpers: image preparation, retention, invitations, votes, error mapping |
 | `src/i18n/locales/` | French (default) and English resources; a test keeps them in sync |
 | `supabase/migrations/` | Schema, RLS policies, RPCs, Storage bucket and policies, retention cron |
@@ -239,7 +240,10 @@ costs before relying on any plan; nothing here promises a free or compliant depl
   goes through RPCs or Edge Functions.
 - Realtime publishes only `group_feed_state`, a per-group version counter; clients refetch
   through RLS-protected queries.
-- Signed photo URLs live 10 minutes, in memory only.
+- Photos are read from the authenticated Storage endpoint (stable address, session token in a
+  header) and uploaded with a one-year `Cache-Control`, so the browser's HTTP cache serves them
+  after the first download. Photos uploaded before 0.12.0 carry `max-age=0`: the browser keeps
+  them too but revalidates each one (a bodyless `304`) once per app launch. No signed URLs.
 - `delete-account` relies on `last_sign_in_at` for the recent-session rule; a magic-link
   re-sign-in refreshes it.
 - The local Storage API returns HTTP 400 with the real status (403/404) in the JSON body; the

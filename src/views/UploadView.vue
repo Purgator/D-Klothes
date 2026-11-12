@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { PHOTOS_BUCKET, invokeFunction, supabase } from '@/lib/supabase'
+import { PHOTOS_BUCKET, PHOTO_CACHE_SECONDS, invokeFunction, supabase } from '@/lib/supabase'
 import { isAcceptedInput, preparePhoto, type PreparedPhoto } from '@/lib/image'
 import { errorKey } from '@/lib/errors'
 import { retryOnNetworkError } from '@/lib/retry'
@@ -97,7 +97,7 @@ async function submit() {
     await retryOnNetworkError(async () => {
       const { error: upError } = await supabase.storage
         .from(PHOTOS_BUCKET)
-        .upload(path, prepared.value!.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: '0' })
+        .upload(path, prepared.value!.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: String(PHOTO_CACHE_SECONDS) })
       // "Already exists" means an earlier attempt did reach the server.
       if (upError && !/exists|duplicate/i.test(upError.message)) throw upError
     })

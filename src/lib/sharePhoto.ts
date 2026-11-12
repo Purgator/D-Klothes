@@ -1,4 +1,4 @@
-import { getSignedPhotoUrl } from '@/composables/usePhotoUrl'
+import { getPhotoBlob } from '@/composables/usePhotoUrl'
 
 export type SharePhotoOutcome = 'shared' | 'downloaded' | 'cancelled' | 'failed'
 
@@ -19,9 +19,7 @@ function fileName(title: string): string {
 export async function sharePhoto(path: string, title: string): Promise<SharePhotoOutcome> {
   let file: File
   try {
-    const response = await fetch(await getSignedPhotoUrl(path))
-    if (!response.ok) throw new Error('fetch_failed')
-    file = new File([await response.blob()], fileName(title), { type: 'image/jpeg' })
+    file = new File([await getPhotoBlob(path)], fileName(title), { type: 'image/jpeg' })
   } catch {
     return 'failed'
   }

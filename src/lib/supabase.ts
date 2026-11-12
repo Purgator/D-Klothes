@@ -18,7 +18,11 @@ export const supabase = createClient<Database>(url || 'https://not-configured.in
 })
 
 export const PHOTOS_BUCKET = 'photos'
-export const SIGNED_URL_TTL_SECONDS = 600
+/**
+ * Photos never change once uploaded (unique path, no overwrite), so the browser may keep its
+ * copy for a year: each device downloads a photo once. Sent as the object's Cache-Control.
+ */
+export const PHOTO_CACHE_SECONDS = 365 * 24 * 60 * 60
 
 /** Absolute URL of an app route, honouring the deployment base path (e.g. GitHub Pages). */
 export function appUrl(path: string): string {

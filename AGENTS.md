@@ -13,7 +13,8 @@ Use D-Klothes as the display name and DKlothes for programmatic identifiers. The
 - Styling: Tailwind CSS.
 - Backend: Supabase Auth, PostgreSQL, private Storage, and Realtime.
 - Hosting is a deployment decision. Check current terms, limits, data region, and costs before choosing a provider. Do not promise a free deployment.
-- Use a service worker only for the installable app shell in the MVP. Do not cache private API responses, votes, or photos. The only transient exception is the Web Share Target hand-off: a photo another app shares into D-Klothes is parked in a dedicated cache by the service worker and deleted as soon as the app collects it.
+- Use a service worker only for the installable app shell in the MVP. Do not store private API responses or votes in the browser, and do not put photos in the service worker's caches. The only transient exception is the Web Share Target hand-off: a photo another app shares into D-Klothes is parked in a dedicated cache by the service worker and deleted as soon as the app collects it.
+- Photos are the one kind of private data the browser may keep, and only in its ordinary HTTP cache: a photo never changes once uploaded, so it is uploaded with a long `Cache-Control` max-age and read from a stable, authenticated address (session token in a header, never in the URL). Each device then downloads a photo once, which is what keeps bandwidth within a small hosting plan. Everything else (profile, groups, votes, counts) is always fetched fresh and refetched on the refresh button and when the app returns to the foreground.
 
 Do not add a state-management library until shared state requires one. Keep the initial app structure small and follow the structure the scaffold creates.
 
@@ -66,7 +67,7 @@ Define required fields, valid values, foreign-key deletion behavior, and uniquen
 - The Supabase anon key is expected to be present in the browser; the service-role key must never be sent to or bundled in client code.
 - Keep the photo bucket private. Store object paths, not public or long-lived signed URLs, in the database. Authorize Storage reads and writes against the user's current group membership and the object's group path.
 - Allow uploads only for approved group members. Limit deletion to the uploader or group owner, subject to retention and group-deletion rules.
-- Create short-lived signed URLs only after authorization. Treat them as bearer credentials and do not log them.
+- Display photos through the authenticated Storage endpoint, so every download is authorized against current membership. If a signed URL is ever needed, create it short-lived and only after authorization; treat it as a bearer credential, never persist or log it.
 - Use the Supabase Storage API to upload and delete files. Do not modify Storage metadata tables directly.
 - Keep membership approval, invitation redemption, account deletion, and other multi-step privileged actions in trusted server-side code or carefully restricted database functions. Make operations atomic where possible and safe to retry where they span Storage and PostgreSQL.
 
@@ -105,7 +106,7 @@ If the product changes this retention period, update the user-facing policy and 
 - Make deletion resumable and safe to retry if Storage or database operations fail. Confirm completion only after all required data is removed.
 - Provide a machine-readable export of the requesting user's profile, votes, and memberships, plus the photo files and associated metadata. Authorize and protect the export like other private data.
 
-Do not promise that browser data can be remotely erased. The MVP avoids persisting private photos and API data in browser caches.
+Do not promise that browser data can be remotely erased. The app does not persist private API data in the browser. Photos a member has already viewed stay in that browser's HTTP cache until the browser evicts them, including after the photo is deleted, the member leaves the group, or signs out; the app itself stops showing them as soon as the record is gone. Say so in the privacy notice.
 
 ## Internationalization and accessibility
 
