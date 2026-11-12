@@ -196,12 +196,26 @@ aggregate counts) is a `security definer` RPC that checks `auth.uid()` explicitl
    | `RETENTION_CLEANUP_SECRET` | shared secret checked by `retention-cleanup` |
 
 2. In Supabase Auth, set the site URL and add `<origin>/<base>/auth/callback` to the redirect URLs.
-   Apply the branded sign-in email (`supabase/templates/magic_link.html`, subject in
-   `supabase/config.toml`) to both the *Magic Link* and *Confirm signup* templates, in the
-   dashboard or through the Management API. On the free plan this needs a custom SMTP provider
-   first (Authentication → SMTP settings): without one, Supabase keeps its own templates and
-   sender name. Do not run `supabase config push` blindly: the auth URLs in `config.toml` are the
-   local ones.
+   Do not run `supabase config push` blindly: the auth URLs in `config.toml` are the local ones.
+
+   **Sign-in emails need a real sender.** Supabase's built-in mailer only writes to the
+   project's own team members, a couple of times an hour, with its own template. Any SMTP
+   account works; the simplest one that needs neither a domain nor a personal address is a
+   mailbox created only for the app:
+
+   1. Create a mailbox for the app (for example a new Gmail account), turn on two-step
+      verification and create an *app password* for it.
+   2. `cp .env.email.example .env.email` and fill it in (SMTP host, login, app password, the
+      project ref and a Supabase access token). The file is git-ignored.
+   3. `npm run email:configure -- --dry-run` to review, then `npm run email:configure`.
+
+   The script sets the SMTP sender, the hourly email ceiling, and the branded template
+   (`supabase/templates/magic_link.html`, subject in `supabase/config.toml`) for both the
+   *Magic Link* and *Confirm signup* emails, through the Management API. Run it again after
+   editing the template. With a domain of your own, point the same variables at a
+   transactional provider (Resend, Brevo...) and set `SMTP_SENDER_EMAIL`. A mailbox provider
+   caps daily sending and may suspend an account that looks automated: fine for a few groups
+   of friends, not for a public launch.
 3. Store the cleanup URL and secret in Vault so the cron job can call the function:
 
    ```sql

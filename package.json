@@ -13,6 +13,7 @@
     "check": "npm run typecheck && npm run test && vite build",
     "db:test": "supabase test db",
     "db:smoke": "bash supabase/functions/smoke-test.sh",
+    "email:configure": "node --env-file=.env.email scripts/configure-auth-email.mjs",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.gen.ts"
   },
   "dependencies": {
