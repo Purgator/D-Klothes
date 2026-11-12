@@ -1,6 +1,6 @@
 -- pgTAP tests for the API privilege whitelist: what a hand-written request can and cannot do.
 begin;
-select plan(31);
+select plan(33);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -94,6 +94,9 @@ select lives_ok($$update public.notifications set read_at = now() where user_id 
 -- ---------------------------------------------------------------------------
 -- Functions: internal helpers are not part of the API.
 -- ---------------------------------------------------------------------------
+select throws_ok($$select public.item_uploader_id('70000000-0000-0000-0000-000000000001')$$, '42501', null,
+  'a user cannot look up who uploaded a photo from its id');
+select is(public.is_item_uploader('70000000-0000-0000-0000-000000000001'), false, 'is_item_uploader only answers about the caller');
 select throws_ok($$select public.account_tier_of('00000000-0000-0000-0000-000000000071')$$, '42501', null,
   'a user cannot look up the plan of someone else');
 select throws_ok($$select public.wants_notification('00000000-0000-0000-0000-000000000072', 'item_added', (select id from t_wg))$$, '42501', null,

@@ -1,6 +1,6 @@
 -- pgTAP tests for ownership transfer, member removal and account-boundary constraints.
 begin;
-select plan(13);
+select plan(25);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -29,8 +29,8 @@ select throws_ok($$update public.group_members set role = 'owner' where user_id 
 
 -- Member leaves / owner removes.
 select tests.login('00000000-0000-0000-0000-000000000002');
-select throws_ok($$select public.transfer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002')$$, '42501', null,
-  'a member cannot transfer ownership');
+select throws_ok($$select public.offer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002')$$, '42501', null,
+  'a member cannot offer ownership');
 delete from public.group_members where group_id = (select id from t_group) and user_id = '00000000-0000-0000-0000-000000000001';
 select tests.logout();
 select is((select count(*) from public.group_members where group_id = (select id from t_group) and role = 'owner'), 1::bigint, 'a member cannot remove the owner');
@@ -42,10 +42,45 @@ select is((select count(*) from public.group_members where group_id = (select id
 
 -- Ownership transfer.
 select tests.login('00000000-0000-0000-0000-000000000001');
-select throws_ok($$select public.transfer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000004')$$, 'P0004', null,
-  'ownership can only go to a member');
-select lives_ok($$select public.transfer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002')$$,
-  'the owner transfers ownership to a member');
+select throws_ok($$select public.offer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000004')$$, 'P0004', null,
+  'ownership can only be offered to a member');
+select throws_ok($$insert into public.ownership_offers (group_id, to_user) values ((select id from t_group), '00000000-0000-0000-0000-000000000002')$$, '42501', null,
+  'an offer cannot be written directly');
+select lives_ok($$select public.offer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002')$$,
+  'the owner offers ownership to a member');
+select tests.logout();
+select is((select owner_id from public.groups where id = (select id from t_group)), '00000000-0000-0000-0000-000000000001'::uuid,
+  'an offer alone changes nothing');
+
+-- Only the member it was made to sees and answers the offer.
+select tests.login('00000000-0000-0000-0000-000000000004');
+select is((select count(*) from public.ownership_offers), 0::bigint, 'a stranger does not see the offer');
+select throws_ok($$select public.respond_ownership_offer((select id from t_group), true)$$, 'P0015', null,
+  'a stranger cannot accept an offer made to someone else');
+select tests.login('00000000-0000-0000-0000-000000000002');
+select is((select count(*) from public.ownership_offers), 1::bigint, 'the member sees the offer made to them');
+select lives_ok($$select public.respond_ownership_offer((select id from t_group), false)$$, 'the member declines');
+select tests.logout();
+select is((select owner_id from public.groups where id = (select id from t_group)), '00000000-0000-0000-0000-000000000001'::uuid,
+  'a declined offer leaves the owner in place');
+select is((select count(*) from public.ownership_offers), 0::bigint, 'an answered offer is gone');
+select is((select count(*) from public.notifications
+           where kind = 'ownership_declined' and user_id = '00000000-0000-0000-0000-000000000001'), 1::bigint,
+  'the owner is told about the refusal');
+select is((select count(*) from public.notifications where kind = 'ownership_offered' and read_at is null), 0::bigint,
+  'the offer notification is settled');
+
+-- Withdrawn offer, then an accepted one.
+select tests.login('00000000-0000-0000-0000-000000000001');
+select public.offer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002');
+select public.cancel_ownership_offer((select id from t_group));
+select tests.login('00000000-0000-0000-0000-000000000002');
+select throws_ok($$select public.respond_ownership_offer((select id from t_group), true)$$, 'P0015', null,
+  'a withdrawn offer cannot be accepted');
+select tests.login('00000000-0000-0000-0000-000000000001');
+select public.offer_group_ownership((select id from t_group), '00000000-0000-0000-0000-000000000002');
+select tests.login('00000000-0000-0000-0000-000000000002');
+select lives_ok($$select public.respond_ownership_offer((select id from t_group), true)$$, 'the member accepts');
 select tests.logout();
 select is((select owner_id from public.groups where id = (select id from t_group)), '00000000-0000-0000-0000-000000000002'::uuid,
   'groups.owner_id follows the transfer');

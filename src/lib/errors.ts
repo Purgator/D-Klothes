@@ -31,6 +31,8 @@ export function errorKey(err: unknown): string {
         return 'errors.limit_photos'
       case 'P0014':
         return 'errors.upload_not_allowed'
+      case 'P0015':
+        return 'errors.no_ownership_offer'
       case '23503':
         return 'errors.owns_groups'
     }

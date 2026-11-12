@@ -144,6 +144,11 @@ async function loadRequests() {
 // Refresh when a notification arrives (someone applied while the page is open).
 const notifications = useNotifications()
 watch(() => notifications.items.value, () => void loadRequests())
+// Same for an ownership offer made, answered or accepted while the page is open.
+watch(
+  () => notifications.items.value.filter((n) => n.kind.startsWith('ownership_') && n.group_id === groupId.value).length,
+  () => void Promise.all([loadOffer(), feed.load(), overview.load()]),
+)
 const review = (id: string, approve: boolean) =>
   run(async () => {
     const { error: e } = await supabase.rpc('review_membership_request', { p_request_id: id, p_approve: approve })
@@ -183,17 +188,38 @@ const leave = () =>
   })
 
 // --- Ownership transfer --------------------------------------------------------
+// The owner offers, the member accepts or declines: nobody becomes owner without agreeing.
 const transferTarget = ref('')
 const otherMembers = computed(() => feed.members.value.filter((m) => m.user_id !== userId.value))
+// Visible to the owner and to the member the offer was made to, nobody else.
+const offerTo = ref<string | null>(null)
+async function loadOffer() {
+  const { data } = await supabase.from('ownership_offers').select('to_user').eq('group_id', groupId.value).maybeSingle()
+  offerTo.value = data?.to_user ?? null
+}
+watch(groupId, loadOffer, { immediate: true })
+const offeredToMe = computed(() => !!offerTo.value && offerTo.value === userId.value)
+const offerName = computed(() => feed.memberNames.value.get(offerTo.value ?? '') ?? '?')
+const ownerName = computed(() => feed.memberNames.value.get(feed.group.value?.owner_id ?? '') ?? '?')
 const transfer = () =>
   run(async () => {
-    const target = otherMembers.value.find((m) => m.user_id === transferTarget.value)
-    if (!target) return
-    if (!window.confirm(t('settings.transferConfirm', { name: target.profile?.display_name ?? '?' }))) return
-    const { error: e } = await supabase.rpc('transfer_group_ownership', { p_group_id: groupId.value, p_new_owner: target.user_id })
+    if (!transferTarget.value) return
+    const { error: e } = await supabase.rpc('offer_group_ownership', { p_group_id: groupId.value, p_to_user: transferTarget.value })
     if (e) throw e
     transferTarget.value = ''
-    await Promise.all([feed.load(), overview.load()])
+    await loadOffer()
+  })
+const cancelOffer = () =>
+  run(async () => {
+    const { error: e } = await supabase.rpc('cancel_ownership_offer', { p_group_id: groupId.value })
+    if (e) throw e
+    await loadOffer()
+  })
+const answerOffer = (accept: boolean) =>
+  run(async () => {
+    const { error: e } = await supabase.rpc('respond_ownership_offer', { p_group_id: groupId.value, p_accept: accept })
+    await Promise.all([loadOffer(), feed.load(), overview.load()])
+    if (e) throw e
   })
 
 // --- Delete group --------------------------------------------------------------
@@ -214,6 +240,15 @@ const deleteGroup = () =>
       <p v-else-if="feed.notMember.value" class="alert-error" role="alert">{{ t('group.notMember') }}</p>
       <div v-else-if="feed.group.value" class="flex flex-col">
         <p v-if="error" class="alert-error mb-4" role="alert">{{ t(error) }}</p>
+
+        <!-- An ownership offer waiting for this member's answer -->
+        <div v-if="offeredToMe" class="alert-info mb-4 flex flex-col gap-2" role="status">
+          <p class="font-semibold">{{ t('settings.transferOffer', { name: ownerName }) }}</p>
+          <div class="flex gap-2">
+            <button type="button" class="btn-primary btn-sm flex-1" :disabled="busy" @click="answerOffer(true)"><AppIcon name="check" size="16" /> {{ t('settings.transferAccept') }}</button>
+            <button type="button" class="btn-secondary btn-sm flex-1" :disabled="busy" @click="answerOffer(false)"><AppIcon name="x" size="16" /> {{ t('settings.transferDecline') }}</button>
+          </div>
+        </div>
 
         <!-- Requests (owner), first: it is the thing that needs action -->
         <template v-if="feed.isOwner.value">
@@ -342,7 +377,14 @@ const deleteGroup = () =>
         <template v-if="feed.isOwner.value">
           <h2 id="danger-title" class="section-title text-red-700">{{ t('settings.danger') }}</h2>
           <section class="list-group ring-red-200" aria-labelledby="danger-title">
-            <form v-if="otherMembers.length" class="flex flex-col gap-2 px-4 py-3" @submit.prevent="transfer">
+            <div v-if="offerTo" class="flex flex-col gap-2 px-4 py-3">
+              <p class="label">{{ t('settings.transfer') }}</p>
+              <div class="flex items-center gap-2">
+                <p class="min-w-0 flex-1 text-sm text-stone-600">{{ t('settings.transferPending', { name: offerName }) }}</p>
+                <button type="button" class="btn-secondary btn-sm shrink-0" :disabled="busy" @click="cancelOffer">{{ t('settings.transferCancel') }}</button>
+              </div>
+            </div>
+            <form v-else-if="otherMembers.length" class="flex flex-col gap-2 px-4 py-3" @submit.prevent="transfer">
               <label for="transfer-to" class="label">{{ t('settings.transfer') }}</label>
               <div class="flex gap-2">
                 <select id="transfer-to" v-model="transferTarget" class="input" required>

@@ -20,6 +20,9 @@ const read = computed(() => notifications.groups.value.filter((g) => !g.unread))
 function target(n: NotificationGroup): RouteLocationRaw | null {
   switch (n.kind) {
     case 'membership_requested':
+    case 'ownership_offered':
+    case 'ownership_accepted':
+    case 'ownership_declined':
       return n.group_id ? { name: 'group-settings', params: { groupId: n.group_id } } : null
     case 'request_approved':
     case 'member_joined':
@@ -54,6 +57,9 @@ const icons: Record<NotificationRow['kind'], string> = {
   member_joined: '👋',
   item_added: '📷',
   item_wanted: '💛',
+  ownership_offered: '👑',
+  ownership_accepted: '🤝',
+  ownership_declined: '🚫',
 }
 
 async function open(n: NotificationGroup) {

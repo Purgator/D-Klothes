@@ -45,7 +45,7 @@ The MVP requires a network connection for private content and voting. Offline ph
 - Redeem a link through a trusted, atomic server-side operation. A successful redemption creates one pending request and consumes the single-use link. Rejection does not reactivate it.
 - A pending or rejected applicant is not a group member and cannot read group data or photos.
 - Approval adds the member and records who reviewed the request. Enforce these rules on the server and in database policies, not only in the UI.
-- A group has one owner. Ownership transfer and group deletion must be explicit operations with authorization checks.
+- A group has one owner. Ownership transfer and group deletion must be explicit operations with authorization checks. Ownership is offered by the owner and only changes hands when the receiving member accepts.
 
 ## Data model and authorization
 

@@ -274,6 +274,13 @@ export type Database = {
           },
         ];
       };
+      ownership_offers: {
+        Row: { created_at: string; group_id: string; to_user: string };
+        ComputedFields: never;
+        Insert: { created_at?: string; group_id: string; to_user: string };
+        Update: { created_at?: string; group_id?: string; to_user?: string };
+        Relationships: [];
+      };
       notifications: {
         Row: {
           actor_id: string | null;
@@ -494,6 +501,7 @@ export type Database = {
       is_group_member: { Args: { p_group_id: string }; Returns: boolean };
       is_group_owner: { Args: { p_group_id: string }; Returns: boolean };
       item_group_id: { Args: { p_item_id: string }; Returns: string };
+      is_item_uploader: { Args: { p_item_id: string }; Returns: boolean };
       item_uploader_id: { Args: { p_item_id: string }; Returns: string };
       mark_notifications_read: { Args: { p_ids?: string[] }; Returns: number };
       my_group_mute: { Args: { p_group_id: string }; Returns: boolean };
@@ -642,8 +650,13 @@ export type Database = {
         Args: { p_group: string; p_kind: Database["public"]["Enums"]["notification_kind"]; p_user: string };
         Returns: boolean;
       };
-      transfer_group_ownership: {
-        Args: { p_group_id: string; p_new_owner: string };
+      offer_group_ownership: {
+        Args: { p_group_id: string; p_to_user: string };
+        Returns: undefined;
+      };
+      cancel_ownership_offer: { Args: { p_group_id: string }; Returns: undefined };
+      respond_ownership_offer: {
+        Args: { p_accept: boolean; p_group_id: string };
         Returns: undefined;
       };
     };
@@ -656,7 +669,10 @@ export type Database = {
         | "request_rejected"
         | "member_joined"
         | "item_added"
-        | "item_wanted";
+        | "item_wanted"
+        | "ownership_offered"
+        | "ownership_accepted"
+        | "ownership_declined";
       request_status: "pending" | "approved" | "rejected";
       vote_type: "keep" | "let_go" | "want";
     };
@@ -783,6 +799,9 @@ export const Constants = {
         "member_joined",
         "item_added",
         "item_wanted",
+        "ownership_offered",
+        "ownership_accepted",
+        "ownership_declined",
       ],
       request_status: ["pending", "approved", "rejected"],
       vote_type: ["keep", "let_go", "want"],
