@@ -10,6 +10,8 @@ const session = ref<Session | null>(null)
 const profile = ref<Profile | null>(null)
 const ready = ref(false)
 let initPromise: Promise<void> | null = null
+// Session changes still being applied (session set, profile on its way).
+let applying: Promise<void> = Promise.resolve()
 
 // The magic link usually opens in a new tab, so the return path must survive the tab:
 // localStorage, not sessionStorage. It is consumed once, after the first successful sign-in.
@@ -72,11 +74,11 @@ export function useAuth() {
       // The profile is loaded once per sign-in; an app left open for days must not keep it forever.
       onAppResume(() => void refreshProfile())
       supabase.auth.onAuthStateChange((event, next) => {
-        // Supabase warns against awaiting inside the callback; defer the async work.
-        void Promise.resolve().then(() => {
-          if (event === 'SIGNED_OUT') return applySession(null)
-          return applySession(next)
-        })
+        // Supabase warns against awaiting inside the callback; defer the async work. The chain
+        // keeps changes in order and lets whenReady() wait for the profile of a fresh sign-in.
+        applying = applying
+          .then(() => applySession(event === 'SIGNED_OUT' ? null : next))
+          .catch((err) => console.error('session change failed', err instanceof Error ? err.message : err))
       })
     })()
   }
@@ -85,8 +87,14 @@ export function useAuth() {
   const isSignedIn = computed(() => !!session.value)
   const hasProfile = computed(() => !!profile.value)
 
+  /**
+   * Resolves once the session and its profile are both known. After a sign-in the session
+   * arrives first and the profile a request later: deciding "no profile yet" in between
+   * would send a returning user to the name screen.
+   */
   async function whenReady(): Promise<void> {
     await initPromise
+    await applying
   }
 
   async function signInWithEmail(email: string, redirectPath: string): Promise<void> {
@@ -98,12 +106,19 @@ export function useAuth() {
   async function saveDisplayName(displayName: string): Promise<void> {
     const uid = user.value?.id
     if (!uid) throw new Error('unauthenticated')
+    // Insert, never upsert: the name screen must not be able to rename an existing account,
+    // whatever made the app believe there was no profile (a race, a failed load).
     const { data, error } = await supabase
       .from('profiles')
-      .upsert({ id: uid, display_name: displayName.trim() }, { onConflict: 'id' })
+      .insert({ id: uid, display_name: displayName.trim() })
       .select()
       .single()
-    if (error) throw error
+    if (error) {
+      if (error.code !== '23505') throw error
+      await loadProfile(uid)
+      if (!profile.value) throw error
+      return
+    }
     profile.value = data
   }
 

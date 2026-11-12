@@ -45,6 +45,10 @@ onMounted(async () => {
       return
     }
   }
+  // The session can be known before its profile has loaded: wait for it, and ask once more
+  // rather than send someone who already has a name to the name screen.
+  await auth.whenReady()
+  if (!auth.hasProfile.value) await auth.refreshProfile()
   const target = auth.consumeRedirect()
   await router.replace(auth.hasProfile.value ? target : { name: 'onboarding', query: { redirect: target } })
 })

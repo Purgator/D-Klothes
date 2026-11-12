@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
@@ -15,6 +15,18 @@ const name = ref('')
 const saving = ref(false)
 const error = ref<string | null>(null)
 
+function leave() {
+  const r = route.query.redirect
+  return router.replace(typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') ? r : { name: 'home' })
+}
+
+// Reaching this screen with an existing profile (it failed to load, or loaded late) must not
+// ask for a name again: check with the server and move on.
+onMounted(async () => {
+  await auth.refreshProfile()
+  if (auth.hasProfile.value) await leave()
+})
+
 async function submit() {
   const value = name.value.trim()
   if (value.length < 1 || value.length > 50) {
@@ -25,8 +37,7 @@ async function submit() {
   error.value = null
   try {
     await auth.saveDisplayName(value)
-    const r = route.query.redirect
-    await router.replace(typeof r === 'string' && r.startsWith('/') && !r.startsWith('//') ? r : { name: 'home' })
+    await leave()
   } catch (err) {
     error.value = errorKey(err)
   } finally {
