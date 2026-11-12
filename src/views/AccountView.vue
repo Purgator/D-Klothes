@@ -129,9 +129,7 @@ async function signOut() {
         <span class="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 text-2xl font-bold text-white" aria-hidden="true">{{ initial }}</span>
         <div class="min-w-0">
           <h2 id="profile-title" class="truncate text-lg font-bold">{{ auth.profile.value?.display_name }}</h2>
-          <p class="truncate text-sm text-stone-500">{{ auth.user.value?.email }}</p>
-          <p class="mt-0.5 text-xs text-stone-400">{{ t('account.displayNameFixed') }}</p>
-        </div>
+          <p class="truncate text-sm text-stone-500">{{ auth.user.value?.email }}</p>        </div>
       </section>
 
       <!-- Preferences -->
