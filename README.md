@@ -8,6 +8,16 @@ sorting out their wardrobes. You photograph a piece of clothing, your friends te
 advice, the app never disposes of or transfers anything, and you arrange any hand-over
 yourself.
 
+<p align="center">
+  <img src="docs/review.png" width="250" alt="Review screen: a photo of a polka dot dress dragged to the right, stamped Keep, above the Let go, I want this and Keep buttons">
+  <img src="docs/collection.png" width="250" alt="Collection of the Flatmates group: twelve clothing photos in a grid, each with its Keep, Let go and I want this counts">
+  <img src="docs/item.png" width="250" alt="A member's own denim jacket: 3 Keep, 0 Let go, 3 I want this, and the names of the three friends who want it">
+</p>
+
+<p align="center">
+  <sub>Swipe to give your advice · the group's collection with everyone's counts · your own photo, with who would like to have it</sub>
+</p>
+
 👉 **Open the app: [purgator.github.io/D-Klothes](https://purgator.github.io/D-Klothes/)**
 
 Installable on iPhone and Android as a web app. French and English, chosen from your device
@@ -69,6 +79,14 @@ address; you receive a link to click, there is no password.
   an "I want this" settles the uploader's notification by itself.
 - **Your data stays yours.** Export everything (profile, memberships, votes, photos) as a ZIP,
   or delete your account entirely.
+
+| | |
+|---|---|
+| <img src="docs/notifications.png" width="300" alt="Notifications page: four unread lines (three friends want a jacket, a request to join, two new photos) above the history"> | <img src="docs/account.png" width="300" alt="Account page: the free plan with its limits and current usage, data export, account deletion and sign out"> |
+| Notifications, grouped: three friends wanting the same jacket are one line. | The account page: your plan and usage, your data, your way out. |
+
+The screenshots show fictional people and drawn clothes. `scripts/screenshots.mjs` regenerates
+them from the real interface (see *Checks*).
 
 ## Free and premium accounts
 
@@ -168,6 +186,12 @@ npm run db:test      # pgTAP tests against the local stack
 npm run db:smoke     # end-to-end Edge Function checks (functions must be served)
 npm run db:types     # regenerate src/types/database.gen.ts after a migration
 ```
+
+The README screenshots in `docs/` come from `node scripts/screenshots.mjs`. It starts its own
+dev server and drives the real interface in headless Chrome at a phone size, with fictional
+data answered by the script itself: no Supabase project, no account, no `.env` file is used.
+Puppeteer is not a dependency of the project; the comment at the top of the script says how to
+provide it. `docs/` is not part of the build output.
 
 `.github/workflows/pages.yml` runs the frontend checks and deploys `main` to GitHub Pages;
 `.github/workflows/backend.yml` runs the pgTAP and smoke tests on a throwaway stack.
