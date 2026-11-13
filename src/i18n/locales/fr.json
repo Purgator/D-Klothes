@@ -397,6 +397,8 @@
     "metadata_present": "La photo contient encore des métadonnées. Réessayez l’envoi.",
     "invalid_path": "Envoi refusé : chemin de fichier invalide.",
     "object_not_found": "Le fichier envoyé est introuvable. Réessayez.",
+    "upload_not_opened": "L’envoi a expiré. Réessayez.",
+    "uploads_in_progress": "Trop d’envois en cours sur ce compte. Réessayez dans un quart d’heure.",
     "storage_delete_failed": "La suppression du fichier a échoué. Réessayez.",
     "confirmation_mismatch": "Le texte de confirmation ne correspond pas.",
     "confirmation_required": "Confirmation requise.",

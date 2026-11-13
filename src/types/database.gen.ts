@@ -274,6 +274,13 @@ export type Database = {
           },
         ];
       };
+      photo_uploads: {
+        Row: { created_at: string; group_id: string; storage_path: string; uploader_id: string };
+        ComputedFields: never;
+        Insert: { created_at?: string; group_id: string; storage_path: string; uploader_id: string };
+        Update: { created_at?: string; group_id?: string; storage_path?: string; uploader_id?: string };
+        Relationships: [];
+      };
       ownership_offers: {
         Row: { created_at: string; group_id: string; to_user: string };
         ComputedFields: never;
@@ -655,6 +662,15 @@ export type Database = {
         Returns: undefined;
       };
       cancel_ownership_offer: { Args: { p_group_id: string }; Returns: undefined };
+      open_photo_upload: { Args: { p_group_id: string }; Returns: string };
+      cancel_photo_upload: { Args: { p_path: string }; Returns: boolean };
+      can_store_photo: { Args: { p_name: string }; Returns: boolean };
+      owns_pending_photo: { Args: { p_name: string }; Returns: boolean };
+      complete_photo_upload: {
+        Args: { p_path: string; p_title: string; p_uploader: string };
+        Returns: Database["public"]["Tables"]["clothing_items"]["Row"];
+      };
+      orphan_photo_paths: { Args: { p_limit?: number; p_older_than?: unknown }; Returns: string[] };
       respond_ownership_offer: {
         Args: { p_accept: boolean; p_group_id: string };
         Returns: undefined;

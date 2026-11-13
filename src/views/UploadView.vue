@@ -90,27 +90,26 @@ async function submit() {
   uploading.value = true
   step.value = 'uploading'
   error.value = null
-  const path = `${groupId.value}/${uid}/${crypto.randomUUID()}.jpg`
+  let path: string | null = null
   try {
+    // The server reserves the path: it checks the plan limit and accepts the file nowhere else.
+    const { data: reserved, error: openError } = await supabase.rpc('open_photo_upload', { p_group_id: groupId.value })
+    if (openError) throw openError
+    path = reserved
     // Both steps are safe to repeat: the path is unique to this attempt, and the server
     // treats a second registration of the same object as the first one.
     await retryOnNetworkError(async () => {
       const { error: upError } = await supabase.storage
         .from(PHOTOS_BUCKET)
-        .upload(path, prepared.value!.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: String(PHOTO_CACHE_SECONDS) })
+        .upload(reserved, prepared.value!.blob, { contentType: 'image/jpeg', upsert: false, cacheControl: String(PHOTO_CACHE_SECONDS) })
       // "Already exists" means an earlier attempt did reach the server.
       if (upError && !/exists|duplicate/i.test(upError.message)) throw upError
     })
     step.value = 'registering'
-    try {
-      await retryOnNetworkError(() =>
-        invokeFunction<{ item: ClothingItem }>('register-photo', { group_id: groupId.value, path, title: title.value.trim() }),
-      )
-    } catch (err) {
-      // The function removes rejected objects itself; this covers network failures before it ran.
-      await supabase.storage.from(PHOTOS_BUCKET).remove([path])
-      throw err
-    }
+    await retryOnNetworkError(() =>
+      invokeFunction<{ item: ClothingItem }>('register-photo', { group_id: groupId.value, path: reserved, title: title.value.trim() }),
+    )
+    path = null
     haptic([10, 30, 10])
     toast.show(t('toast.photoPublished'), { emoji: '📸' })
     void overview.load()
@@ -118,6 +117,16 @@ async function submit() {
     await router.replace({ name: 'group', params: { groupId: groupId.value } })
   } catch (err) {
     error.value = errorKey(err)
+    // Give the reservation back: the file first (the server refuses otherwise), then the slot.
+    // Whatever this misses is removed by the scheduled cleanup.
+    if (path) {
+      const abandoned = path
+      void supabase.storage
+        .from(PHOTOS_BUCKET)
+        .remove([abandoned])
+        .then(() => supabase.rpc('cancel_photo_upload', { p_path: abandoned }))
+        .then(undefined, () => undefined)
+    }
   } finally {
     uploading.value = false
     step.value = null

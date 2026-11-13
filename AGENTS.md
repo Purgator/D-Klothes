@@ -67,6 +67,7 @@ Define required fields, valid values, foreign-key deletion behavior, and uniquen
 - Do not treat RLS as the only security control. Use authenticated sessions, input validation, least privilege, and secure server-side handling for privileged operations.
 - The Supabase anon key is expected to be present in the browser; the service-role key must never be sent to or bundled in client code.
 - Keep the photo bucket private. Store object paths, not public or long-lived signed URLs, in the database. Authorize Storage reads and writes against the user's current group membership and the object's group path.
+- An upload is reserved before the file is sent: the reservation is checked against the upload right and the plan limit, Storage accepts the file at the reserved path only, and trusted code turns the reservation into the record. Scheduled code removes reservations never completed and files nothing points to.
 - Allow uploads only for approved group members. Limit deletion to the uploader or group owner, subject to retention and group-deletion rules.
 - Display photos through the authenticated Storage endpoint, so every download is authorized against current membership. If a signed URL is ever needed, create it short-lived and only after authorization; treat it as a bearer credential, never persist or log it.
 - Use the Supabase Storage API to upload and delete files. Do not modify Storage metadata tables directly.

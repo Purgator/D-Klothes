@@ -54,6 +54,9 @@ upload() { # upload <token> <path> <generator> -> status
   curl -s -w '\n%{http_code}' -H "apikey: $ANON_KEY" -H "Authorization: Bearer $1" \
     -H "Content-Type: image/jpeg" -X POST "$API_URL/storage/v1/object/photos/$2" --data-binary @<($3) | storage_status
 }
+open_upload() { # open_upload <token> <group> -> reserved path
+  rpc "$1" open_photo_upload "{\"p_group_id\":\"$2\"}" | tr -d '"'
+}
 object_exists() { # object_exists <path> -> 200/404
   admin -w '\n%{http_code}' "$API_URL/storage/v1/object/photos/$1" | storage_status
 }
@@ -88,10 +91,16 @@ check "entitlements reflect the tier" "premium" "$(rpc "$OWNER_TOK" my_entitleme
 check "member stays free" "free" "$(rpc "$MEMBER_TOK" my_entitlements "{}" | json "[0]['tier']")"
 
 echo "== photos (storage + register-photo)"
-CLEAN_PATH="$GROUP_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
-EXIF_PATH="$GROUP_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+CLEAN_PATH="$(open_upload "$OWNER_TOK" "$GROUP_ID")"
+EXIF_PATH="$(open_upload "$OWNER_TOK" "$GROUP_ID")"
+FREE_PATH="$GROUP_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+check "open_photo_upload reserves a path in the caller's folder" "$GROUP_ID/$OWNER_ID" "${CLEAN_PATH%/*}"
+check "upload without a reservation is denied" "403" "$(upload "$OWNER_TOK" "$FREE_PATH" jpeg_clean)"
+mapfile -t R < <(fn "$OWNER_TOK" register-photo "{\"group_id\":\"$GROUP_ID\",\"path\":\"$FREE_PATH\"}")
+check "register-photo refuses a file that was never opened" "404" "${R[0]}"
+check "a stranger cannot open an upload" "42501" "$(rpc "$OTHER_TOK" open_photo_upload "{\"p_group_id\":\"$GROUP_ID\"}" | json "['code']")"
 WRONG_PATH="$GROUP_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
-check "upload into own folder" "200" "$(upload "$OWNER_TOK" "$CLEAN_PATH" jpeg_clean)"
+check "upload to the reserved path" "200" "$(upload "$OWNER_TOK" "$CLEAN_PATH" jpeg_clean)"
 check "upload into someone else's folder is denied" "403" "$(upload "$OWNER_TOK" "$WRONG_PATH" jpeg_clean)"
 check "non-member upload is denied" "403" "$(upload "$OTHER_TOK" "$GROUP_ID/$OTHER_ID/x.jpg" jpeg_clean)"
 mapfile -t R < <(fn "$OWNER_TOK" register-photo "{\"group_id\":\"$GROUP_ID\",\"path\":\"$CLEAN_PATH\",\"title\":\"Jacket\"}")
@@ -103,6 +112,8 @@ check "upload exif JPEG" "200" "$(upload "$OWNER_TOK" "$EXIF_PATH" jpeg_exif)"
 mapfile -t R < <(fn "$OWNER_TOK" register-photo "{\"group_id\":\"$GROUP_ID\",\"path\":\"$EXIF_PATH\"}")
 check "register-photo rejects EXIF" "422" "${R[0]}"
 check "rejected object is removed" "404" "$(object_exists "$EXIF_PATH")"
+check "its reservation is given back" "[]" "$(admin "$API_URL/rest/v1/photo_uploads?select=storage_path&storage_path=eq.$EXIF_PATH")"
+check "a published file cannot be replaced" "403" "$(upload "$OWNER_TOK" "$CLEAN_PATH" jpeg_clean)"
 check "member can sign a URL for the photo" "200" "$(as_user "$MEMBER_TOK" -o /dev/null -w '%{http_code}' -X POST "$API_URL/storage/v1/object/sign/photos/$CLEAN_PATH" -d '{"expiresIn":60}')"
 check "outsider cannot sign a URL" "400" "$(as_user "$OTHER_TOK" -o /dev/null -w '%{http_code}' -X POST "$API_URL/storage/v1/object/sign/photos/$CLEAN_PATH" -d '{"expiresIn":60}')"
 
@@ -115,7 +126,8 @@ check "member upload into an owner-only group is denied" "403" "$(upload "$MEMBE
 mapfile -t R < <(fn "$MEMBER_TOK" register-photo "{\"group_id\":\"$CLOSED_ID\",\"path\":\"$CLOSED_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg\"}")
 check "register-photo refuses a member in an owner-only group" "403" "${R[0]}"
 check "refusal names the upload policy" "upload_not_allowed" "$(echo "${R[1]}" | json "['error']")"
-CLOSED_PATH="$CLOSED_ID/$OWNER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+check "member cannot open an upload in an owner-only group" "P0014" "$(rpc "$MEMBER_TOK" open_photo_upload "{\"p_group_id\":\"$CLOSED_ID\"}" | json "['code']")"
+CLOSED_PATH="$(open_upload "$OWNER_TOK" "$CLOSED_ID")"
 check "owner uploads into an owner-only group" "200" "$(upload "$OWNER_TOK" "$CLOSED_PATH" jpeg_clean)"
 mapfile -t R < <(fn "$OWNER_TOK" register-photo "{\"group_id\":\"$CLOSED_ID\",\"path\":\"$CLOSED_PATH\"}")
 check "owner registers a photo in an owner-only group" "201" "${R[0]}"
@@ -141,15 +153,27 @@ check "object removed" "404" "$(object_exists "$CLEAN_PATH")"
 check "row removed" "[]" "$(rest "$OWNER_TOK" "clothing_items?select=id&id=eq.$ITEM_ID")"
 
 echo "== retention-cleanup"
-OLD_PATH="$GROUP_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+OLD_PATH="$(open_upload "$MEMBER_TOK" "$GROUP_ID")"
 check "member uploads" "200" "$(upload "$MEMBER_TOK" "$OLD_PATH" jpeg_clean)"
-admin -X POST "$API_URL/rest/v1/clothing_items" -d "{\"group_id\":\"$GROUP_ID\",\"uploader_id\":\"$MEMBER_ID\",\"storage_path\":\"$OLD_PATH\",\"created_at\":\"2020-01-01T00:00:00Z\",\"retention_deadline\":\"2022-01-01T00:00:00Z\"}" >/dev/null
+fn "$MEMBER_TOK" register-photo "{\"group_id\":\"$GROUP_ID\",\"path\":\"$OLD_PATH\"}" >/dev/null
+admin -X PATCH "$API_URL/rest/v1/clothing_items?storage_path=eq.$OLD_PATH" -d '{"created_at":"2020-01-01T00:00:00Z","retention_deadline":"2022-01-01T00:00:00Z"}' >/dev/null
+# An upload opened two hours ago and never registered, and one opened just now.
+STALE_PATH="$(open_upload "$MEMBER_TOK" "$GROUP_ID")"
+FRESH_PATH="$(open_upload "$MEMBER_TOK" "$GROUP_ID")"
+check "member uploads and walks away" "200" "$(upload "$MEMBER_TOK" "$STALE_PATH" jpeg_clean)"
+check "member uploads and is still at it" "200" "$(upload "$MEMBER_TOK" "$FRESH_PATH" jpeg_clean)"
+admin -X PATCH "$API_URL/rest/v1/photo_uploads?storage_path=eq.$STALE_PATH" -d "{\"created_at\":\"$(date -u -d '2 hours ago' +%FT%TZ)\"}" >/dev/null
 check "cleanup without secret is refused" "401" "$(curl -s -o /dev/null -w '%{http_code}' -X POST "$FN/retention-cleanup")"
-check "cleanup deletes the expired item" "True" "$(curl -s -H "x-cleanup-secret: $CLEANUP_SECRET" -X POST "$FN/retention-cleanup" | json "['deleted'] >= 1")"
+CLEANUP="$(curl -s -H "x-cleanup-secret: $CLEANUP_SECRET" -X POST "$FN/retention-cleanup")"
+check "cleanup deletes the expired item" "True" "$(echo "$CLEANUP" | json "['deleted'] >= 1")"
 check "expired object removed" "404" "$(object_exists "$OLD_PATH")"
+check "cleanup clears the abandoned upload" "True" "$(echo "$CLEANUP" | json "['uploads_cleared'] >= 1")"
+check "abandoned file removed" "404" "$(object_exists "$STALE_PATH")"
+check "abandoned reservation removed" "[]" "$(admin "$API_URL/rest/v1/photo_uploads?select=storage_path&storage_path=eq.$STALE_PATH")"
+check "an upload in progress is left alone" "200" "$(object_exists "$FRESH_PATH")"
 
 echo "== export-account"
-KEEP_PATH="$GROUP_ID/$MEMBER_ID/$(cat /proc/sys/kernel/random/uuid).jpg"
+KEEP_PATH="$(open_upload "$MEMBER_TOK" "$GROUP_ID")"
 upload "$MEMBER_TOK" "$KEEP_PATH" jpeg_clean >/dev/null
 fn "$MEMBER_TOK" register-photo "{\"group_id\":\"$GROUP_ID\",\"path\":\"$KEEP_PATH\",\"title\":\"Scarf\"}" >/dev/null
 STATUS="$(curl -s -o /tmp/export.zip -w '%{http_code}' -H "apikey: $ANON_KEY" -H "Authorization: Bearer $MEMBER_TOK" -X POST "$FN/export-account")"
@@ -164,6 +188,7 @@ check "delete-account requires confirmation" "400" "${R[0]}"
 mapfile -t R < <(fn "$MEMBER_TOK" delete-account '{"confirm":"DELETE"}')
 check "member deletes their account" "200" "${R[0]}"
 check "member photo removed" "404" "$(object_exists "$KEEP_PATH")"
+check "member's unregistered file removed" "404" "$(object_exists "$FRESH_PATH")"
 check "member auth user removed" "" "$(admin "$API_URL/auth/v1/admin/users/$MEMBER_ID" | json "['id']")"
 mapfile -t R < <(fn "$MEMBER_TOK" delete-group "{\"group_id\":\"$GROUP_ID\",\"confirm_name\":\"Smoke group\"}")
 check "deleted user token is rejected" "401" "${R[0]}"

@@ -176,12 +176,12 @@ npm run db:types     # regenerate src/types/database.gen.ts after a migration
 
 | Function | What it does |
 | --- | --- |
-| `register-photo` | After the client uploads to `photos/<group>/<user>/<uuid>.jpg`, verifies membership, the group's upload policy, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads, and uploads beyond the account's photo limit, are deleted from Storage. |
+| `register-photo` | After the client uploads to the path reserved by `open_photo_upload()`, verifies the reservation, membership, the group's upload policy, path ownership, size ≤ 2 MiB and the absence of EXIF/XMP/IPTC/COM segments, then inserts the item. Invalid uploads, and uploads beyond the account's photo limit, are deleted from Storage. |
 | `delete-photo` | Uploader or group owner. Removes the Storage object, confirms it is gone, then deletes the record (votes cascade). |
 | `delete-group` | Owner only, confirmed by typing the group name. Removes every object under the group prefix, then the group row. |
 | `export-account` | ZIP archive with `account.json` (profile, memberships, requests, votes, item metadata) and the user's photo files. |
 | `delete-account` | Requires a sign-in within the last 15 minutes and no owned groups. Removes photos via Storage, then the profile (cascades), then the Auth user. Idempotent. |
-| `retention-cleanup` | Called daily by pg_cron with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. |
+| `retention-cleanup` | Called hourly by pg_cron with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. Also removes uploads opened more than an hour ago and never registered, and files with neither a record nor a reservation. |
 
 Everything else (group creation, invitations, redemption, review, votes, ownership transfer,
 aggregate counts) is a `security definer` RPC that checks `auth.uid()` explicitly.
@@ -243,9 +243,12 @@ costs before relying on any plan; nothing here promises a free or compliant depl
   request cannot rename an account, repoint a photo record or read someone else's plan note.
 - Ownership changes hands by consent: the owner offers the group to a member, who accepts or
   declines; the owner can withdraw the offer in the meantime.
-- Known limits: with very few voters, totals can reveal who chose Keep or Let go; a member
-  writing their own requests can upload files to their own folder without registering them
-  (they count against no quota and are not cleaned up).
+- An upload is reserved first: `open_photo_upload()` checks the upload right and the plan
+  limit, counts the reservation against it (five in progress at most) and returns the one path
+  Storage will accept, for 15 minutes. `register-photo` turns the reservation into the record.
+  Once published, a file can only be deleted with its record, through `delete-photo`. The
+  hourly cleanup removes reservations never completed and any file nothing points to.
+- Known limit: with very few voters, totals can reveal who chose Keep or Let go.
 - Realtime publishes only `group_feed_state`, a per-group version counter; clients refetch
   through RLS-protected queries.
 - Photos are read from the authenticated Storage endpoint (stable address, session token in a

@@ -33,6 +33,8 @@ export function errorKey(err: unknown): string {
         return 'errors.upload_not_allowed'
       case 'P0015':
         return 'errors.no_ownership_offer'
+      case 'P0016':
+        return 'errors.uploads_in_progress'
       case '23503':
         return 'errors.owns_groups'
     }

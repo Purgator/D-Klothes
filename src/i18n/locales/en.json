@@ -397,6 +397,8 @@
     "metadata_present": "The photo still contains metadata. Try uploading again.",
     "invalid_path": "Upload refused: invalid file path.",
     "object_not_found": "The uploaded file could not be found. Try again.",
+    "upload_not_opened": "The upload expired. Try again.",
+    "uploads_in_progress": "Too many uploads in progress on this account. Try again in fifteen minutes.",
     "storage_delete_failed": "Deleting the file failed. Try again.",
     "confirmation_mismatch": "The confirmation text does not match.",
     "confirmation_required": "Confirmation required.",

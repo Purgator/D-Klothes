@@ -1,6 +1,6 @@
 -- pgTAP tests for the per-group upload policy (every member vs. owner only).
 begin;
-select plan(13);
+select plan(15);
 
 insert into auth.users (id, email, instance_id, aud, role, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -33,18 +33,30 @@ select is(public.can_upload_to_group((select id from t_closed)), true, 'the owne
 select tests.anon();
 select throws_ok($$select public.can_upload_to_group((select id from t_open))$$, '42501', null, 'anon may not even ask');
 
--- Storage: the insert policy follows the option.
+-- Storage: an upload is opened first, and both steps follow the option.
 select tests.login('00000000-0000-0000-0000-000000000052');
+create temporary table t_member_upload as select public.open_photo_upload((select id from t_open)) as path;
 select lives_ok(
-  $$insert into storage.objects (bucket_id, name, owner) values ('photos', (select id from t_open) || '/00000000-0000-0000-0000-000000000052/a.jpg', '00000000-0000-0000-0000-000000000052')$$,
+  $$insert into storage.objects (bucket_id, name, owner) values ('photos', (select path from t_member_upload), '00000000-0000-0000-0000-000000000052')$$,
   'a member uploads into an open group');
+select throws_ok($$select public.open_photo_upload((select id from t_closed))$$, 'P0014', null,
+  'a member cannot open an upload in an owner-only group');
 select throws_ok(
   $$insert into storage.objects (bucket_id, name, owner) values ('photos', (select id from t_closed) || '/00000000-0000-0000-0000-000000000052/a.jpg', '00000000-0000-0000-0000-000000000052')$$,
   '42501', null, 'a member cannot upload into an owner-only group');
 select tests.login('00000000-0000-0000-0000-000000000051');
+create temporary table t_owner_upload as select public.open_photo_upload((select id from t_closed)) as path;
 select lives_ok(
-  $$insert into storage.objects (bucket_id, name, owner) values ('photos', (select id from t_closed) || '/00000000-0000-0000-0000-000000000051/a.jpg', '00000000-0000-0000-0000-000000000051')$$,
+  $$insert into storage.objects (bucket_id, name, owner) values ('photos', (select path from t_owner_upload), '00000000-0000-0000-0000-000000000051')$$,
   'the owner uploads into an owner-only group');
+-- The option is checked again when the file arrives.
+select tests.logout();
+update public.groups set members_can_upload = false where id = (select id from t_open);
+select tests.login('00000000-0000-0000-0000-000000000052');
+select is(public.can_store_photo((select path from t_member_upload)), false,
+  'a reservation stops accepting a file when the group closes uploads');
+select tests.logout();
+update public.groups set members_can_upload = true where id = (select id from t_open);
 
 -- Records: the trigger refuses a member's photo in an owner-only group even for trusted code.
 select tests.logout();

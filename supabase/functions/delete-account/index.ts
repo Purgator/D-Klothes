@@ -33,7 +33,13 @@ serve(async (req) => {
     .select('group_id, storage_path')
     .eq('uploader_id', user.id)
   if (itemsError) throw itemsError
-  const groupIds = [...new Set((items ?? []).map((i) => i.group_id as string))]
+  // Uploads opened but not registered yet may have left a file too.
+  const { data: uploads, error: uploadsError } = await admin
+    .from('photo_uploads')
+    .select('group_id')
+    .eq('uploader_id', user.id)
+  if (uploadsError) throw uploadsError
+  const groupIds = [...new Set([...(items ?? []), ...(uploads ?? [])].map((i) => i.group_id as string))]
   for (const gid of groupIds) {
     const paths = await listAllObjects(admin, `${gid}/${user.id}`)
     await removeObjects(admin, paths)
