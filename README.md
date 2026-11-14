@@ -205,7 +205,7 @@ provide it. `docs/` is not part of the build output.
 | `delete-group` | Owner only, confirmed by typing the group name. Removes every object under the group prefix, then the group row. |
 | `export-account` | ZIP archive with `account.json` (profile, memberships, requests, votes, item metadata) and the user's photo files. |
 | `delete-account` | Requires a sign-in within the last 15 minutes and no owned groups. Removes photos via Storage, then the profile (cascades), then the Auth user. Idempotent. |
-| `retention-cleanup` | Called hourly by pg_cron with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. Also removes uploads opened more than an hour ago and never registered, and files with neither a record nor a reservation. |
+| `retention-cleanup` | Called every night by pg_cron with `x-cleanup-secret`. Deletes expired photos object-first; items whose object cannot be confirmed gone are retried next run. Also removes uploads opened more than an hour ago and never registered, and files with neither a record nor a reservation. |
 
 Everything else (group creation, invitations, redemption, review, votes, ownership transfer,
 aggregate counts) is a `security definer` RPC that checks `auth.uid()` explicitly.
@@ -271,7 +271,7 @@ costs before relying on any plan; nothing here promises a free or compliant depl
   limit, counts the reservation against it (five in progress at most) and returns the one path
   Storage will accept, for 15 minutes. `register-photo` turns the reservation into the record.
   Once published, a file can only be deleted with its record, through `delete-photo`. The
-  hourly cleanup removes reservations never completed and any file nothing points to.
+  nightly cleanup removes reservations never completed and any file nothing points to.
 - Known limit: with very few voters, totals can reveal who chose Keep or Let go.
 - Realtime publishes only `group_feed_state`, a per-group version counter; clients refetch
   through RLS-protected queries.
